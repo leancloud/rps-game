@@ -1,18 +1,19 @@
 {
-  "name": "play-server-master-getting-started",
+  "name": "client-engine-getting-started",
   "version": "0.1.0",
   "private": true,
-  "description": "A sample LeanCloud Play Server app running in MasterClient mode",
-  "main": "build/index.js",
+  "description": "A sample LeanCloud Client Engine app",
+  "main": "build/src/index.js",
   "scripts": {
     "lint": "tslint src/*",
     "build": "tsc --build tsconfig.json",
     "start": "node build/index.js",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build",
+    "benchmark": "npm run build && memory-usage build/benchmark/empty-room.js"
   },
   "keywords": [
     "leancloud",
-    "play-server",
+    "client-engine",
     "master-client"
   ],
   "license": "MIT",
@@ -36,6 +37,7 @@
     "@types/express": "^4.16.0",
     "@types/lodash": "^4.14.116",
     "@types/nanoid": "^1.0.0",
+    "memory-usage": "^1.2.1",
     "tslint": "^5.11.0",
     "typescript": "^3.0.1"
   }

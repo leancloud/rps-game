@@ -6,6 +6,6 @@
     "sourceMap": true,
     "outDir": "build"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "benchmark/**/*"],
   "exclude": ["node_modules"]
 }

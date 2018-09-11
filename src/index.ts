@@ -15,7 +15,7 @@ app.use(cors());
 // 首页仅起到响应健康检查的作用
 app.get("/", (req, res) => {
   res.send(`
-<p>这是 Play Server MasterClient 模式的服务端部分，客户端部分的示例代码在另一个项目中
+<p>这是 LeanCloud Client Engine 的服务端部分，客户端部分的示例代码在 https://github.com/leancloud/client-engine-demo-webapp
     `);
 });
 
