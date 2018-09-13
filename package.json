@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "tslint src/*",
     "build": "tsc --build tsconfig.json",
-    "start": "node build/index.js",
+    "start": "node build/src/index.js",
     "postinstall": "npm run build",
     "benchmark": "npm run build && memory-usage build/benchmark/empty-room.js"
   },

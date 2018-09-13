@@ -10,7 +10,8 @@ import {
 import { EventEmitter } from "events";
 import _ = require("lodash");
 import { fromEvent, timer } from "rxjs";
-import { filter, first, takeUntil, tap } from "rxjs/operators";
+import { filter, first, take, takeUntil, tap } from "rxjs/operators";
+import { listenNodeEE } from "./utils";
 
 type CustomEventId = number | string;
 interface ICustomEventPayload {
@@ -127,6 +128,22 @@ export default abstract class Game extends EventEmitter {
    */
   public takeFirst(eventId: CustomEventId, player?: Player, timeout?: number) {
     return this.getStream(eventId, player).pipe(first());
+  }
+
+  /**
+   * 当收到服务关闭通知时，游戏的结束逻辑。
+   * 默认情况下，会等游戏结束或者所有玩家离开房间后认为该局游戏可以下线了。
+   * 你可以在子类中扩展或覆盖该行为。
+   */
+  public terminate(): Promise<any> {
+    const allPlayerLeft = fromEvent<PlayEvent[Event.PLAYER_ROOM_LEFT]>(
+      this.masterClient,
+      Event.PLAYER_ROOM_LEFT,
+    ).pipe(take(this.players.length)).toPromise();
+    return Promise.race([
+      listenNodeEE(this, GameEvent.END),
+      allPlayerLeft,
+    ]);
   }
 }
 

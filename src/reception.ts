@@ -31,7 +31,7 @@ interface IGameConstructor<T extends Game> {
  * Reception 负责游戏房间的分配
  */
 export default class Reception<T extends Game> {
-
+  public open = true;
   private waitingList: string[] = [];
   private availableGames: Game[] = [];
   private games = new Set<Game>();
@@ -61,19 +61,30 @@ export default class Reception<T extends Game> {
         players: players.map((player) => player.userId),
         registeredPlayers: Array.from(registeredPlayers.values()),
       })),
+      open: this.open,
       waitingList: this.waitingList,
     };
   }
 
   public makeReservation(playerId: string) {
+    if (!this.open) {
+      throw new Error("Reception closed.");
+    }
     if (playerId in this.waitingList) {
-      throw new Error("Already in queue");
+      throw new Error("Already in queue.");
     }
     this.waitingList.push(playerId);
     debug(`add [${playerId}] to waitingList %o`, this.waitingList);
     const result = listenNodeEE<Room>(this.ee, playerId, `${playerId}:error`);
     this.startMatch().catch(console.error);
     return result;
+  }
+
+  public close() {
+    // 停止接受新的请求
+    this.open = false;
+    // 等待所有游戏结束
+    return Promise.all(Array.from(this.games).map((game) => game.terminate()));
   }
 
   /**
@@ -89,15 +100,21 @@ export default class Reception<T extends Game> {
   }
 
   private async match(): Promise<void> {
+    // 这是一个非常简单非常 naive 的 match 实现示例。
+    // 这个示例里串行地对 waitingList 进行逐一处理，如果没有可用的房间则会先创建一个房间。
+    // 开发者可以按照业务的实际需求实现 match 方法。
     if (this.waitingList.length === 0) { return; }
-    if (this.availableGames.length === 0) {
-      debug(`No room available, creating a new game`);
-      console.log("before start", process.memoryUsage());
-      const room = await this.createNewGame();
-      this.addGame(room);
-    }
     const playerId = this.waitingList.shift()!;
     try {
+      if (!this.open) {
+        throw new Error("Reception closed.");
+      }
+      if (this.availableGames.length === 0) {
+        debug(`No room available, creating a new game`);
+        console.log("before start", process.memoryUsage());
+        const room = await this.createNewGame();
+        this.addGame(room);
+      }
       // 目前只考虑单人匹配的情况，因此拿到第一个 availableGame 即可
       const availableGame = this.availableGames[0];
       this.reserveSeats(availableGame, playerId);
@@ -117,7 +134,7 @@ export default class Reception<T extends Game> {
   }
 
   private markGameAvailable(game: Game) {
-    if (this.availableGames.indexOf(game) === -1) {
+    if (!this.availableGames.includes(game)) {
       this.availableGames.push(game);
     }
   }

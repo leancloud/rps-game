@@ -56,3 +56,18 @@ app.get("/admin/status", (req, res) => {
 });
 
 app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
+console.log(process.pid);
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  debug("SIGTERM recieved. Closing the reception.");
+  try {
+    await reception.close();
+    debug("Shutting down.");
+    process.exit(0);
+  } catch (error) {
+    // 如果发生了异常，什么都不做，Client Engine 在超时后会 SIGKILL 掉进程
+    console.error("Closing reception failed:");
+    console.error(error);
+  }
+});
