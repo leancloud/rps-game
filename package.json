@@ -6,6 +6,7 @@
   "main": "build/src/index.js",
   "scripts": {
     "lint": "tslint src/*",
+    "lint:fix": "tslint src/* --fix",
     "build": "tsc --build tsconfig.json",
     "start": "node build/src/index.js",
     "postinstall": "npm run build",

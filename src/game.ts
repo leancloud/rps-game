@@ -59,7 +59,7 @@ export default abstract class Game extends EventEmitter {
 
   constructor(public room: Room, public masterClient: Play) {
     super();
-    this.customEvents.subscribe(console.log)
+    this.customEvents.subscribe(console.log);
   }
 
   /**
