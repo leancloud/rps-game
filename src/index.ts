@@ -9,7 +9,7 @@ import Reception from "./reception";
 import PRSGame from "./rps-game";
 
 const app = express();
-app.use(bodyParser());
+app.use(bodyParser.json());
 app.use(cors());
 
 // 首页仅起到响应健康检查的作用
@@ -56,7 +56,6 @@ app.get("/admin/status", (req, res) => {
 });
 
 app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
-console.log(process.pid);
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
