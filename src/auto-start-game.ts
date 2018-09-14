@@ -8,21 +8,27 @@ import Game, { GameEvent } from "./game";
 export default abstract class AutoStartGame extends Game {
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
+    this.watchPlayers();
+  }
 
+  protected abstract start(): any;
+
+  private watchPlayers() {
     const playerJoinedHandler = ({ newPlayer }: {
       newPlayer: Player,
     }) => {
       if (this.registeredPlayers.has(newPlayer.userId)) {
         this.registeredPlayers.delete(newPlayer.userId);
       }
-      if (this.availableSeatCount === 0) {
+      if (this.players.length === (this.constructor as typeof AutoStartGame).playerLimit) {
         this.start();
+        unwatch();
       }
     };
 
-    masterClient.on(Event.PLAYER_ROOM_JOINED, playerJoinedHandler);
-    this.once(GameEvent.END, () => masterClient.off(Event.PLAYER_ROOM_JOINED, playerJoinedHandler));
-  }
+    const unwatch = () => this.masterClient.off(Event.PLAYER_ROOM_JOINED, playerJoinedHandler);
 
-  protected abstract start(): any;
+    this.masterClient.on(Event.PLAYER_ROOM_JOINED, playerJoinedHandler);
+    this.once(GameEvent.END, unwatch);
+  }
 }
