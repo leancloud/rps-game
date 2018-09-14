@@ -63,7 +63,9 @@ process.on("SIGTERM", async () => {
   try {
     await reception.close();
     debug("Shutting down.");
-    process.exit(0);
+    setTimeout(() => {
+      process.exit(0);
+    }, 100);
   } catch (error) {
     // 如果发生了异常，什么都不做，Client Engine 在超时后会 SIGKILL 掉进程
     console.error("Closing reception failed:");
