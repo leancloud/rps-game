@@ -7,7 +7,7 @@ import { APP_ID, APP_KEY } from "./configs";
 import Game, { GameEvent } from "./game";
 import { listen, listenNodeEE } from "./utils";
 
-const debug = d("MM:Reception");
+const debug = d("ClientEngine:Reception");
 
 const createNewMasterClient = () => {
   const masterClient = new Play();

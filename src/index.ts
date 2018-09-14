@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 
 const reception = new Reception(PRSGame);
 
-const debug = d("MM");
+const debug = d("ClientEngine");
 
 // TODO: 这个接口需要鉴权与流控
 app.post("/match", async (req, res, next) => {

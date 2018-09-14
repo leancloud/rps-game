@@ -6,7 +6,7 @@ import AutoStartGame from "./auto-start-game";
 import { GameEvent } from "./game";
 import { listen } from "./utils";
 
-const debug = d("MM:RPS");
+const debug = d("RPS");
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];
