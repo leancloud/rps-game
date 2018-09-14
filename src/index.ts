@@ -55,6 +55,10 @@ app.get("/admin/status", (req, res) => {
   res.json(reception.getStatus());
 });
 
+if (process.env.SERVE_DOCS === "1") {
+  app.use("/docs", express.static("docs"));
+}
+
 app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
 
 // Graceful shutdown
