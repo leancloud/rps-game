@@ -49,7 +49,7 @@ export default class Reception<T extends Game> {
       availableGames: this.availableGames.map((game) => game.room.name),
       games: Array.from(this.games).map(({
         room: {
-          name, master, playerList,
+          name, master,
         },
         availableSeatCount,
         registeredPlayers,
@@ -189,16 +189,15 @@ export default class Reception<T extends Game> {
     return listen(masterClient, Event.ROOM_CREATED, Event.ROOM_CREATE_FAILED).then(
       () => {
         const game = new this.gameClass(masterClient.room, masterClient);
-        game.once(GameEvent.END, () => this.destroy(game));
+        game.once(GameEvent.END, () => this.remove(game));
         return game;
       },
     );
   }
 
-  private destroy(game: T) {
-    debug(`Game end. Destroy [${game.room.name}].`);
+  private remove(game: T) {
+    debug(`Removing [${game.room.name}].`);
     this.games.delete(game);
     this.removeFromAvailableGames(game);
-    game.masterClient.disconnect();
   }
 }

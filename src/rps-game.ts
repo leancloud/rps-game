@@ -2,8 +2,7 @@ import { Event } from "@leancloud/play";
 import d = require("debug");
 import _ = require("lodash");
 import { tap } from "rxjs/operators";
-import AutoStartGame from "./auto-start-game";
-import { GameEvent } from "./game";
+import { AutomaticGame } from "./automation";
 import { listen } from "./utils";
 
 const debug = d("RPS");
@@ -14,10 +13,19 @@ const wins = [1, 2, 0];
 /**
  * 石头剪刀布游戏
  */
-export default class RPSGame extends AutoStartGame {
+export default class RPSGame extends AutomaticGame {
   public reservationHoldTime = 12000;
 
-  public async start(): Promise<void> {
+  public terminate() {
+    // 将游戏 Room 的 _open 属性标记为 false，表示不会再有新的用户加入了。
+    // 客户端可以按照业务需求响应该属性的变化（例如对于还未开始的游戏，客户端可以重新发起匹配请求）。
+    this.room.setCustomProperties({
+      _open: false,
+    });
+    return super.terminate();
+  }
+
+  protected async start(): Promise<void> {
     // 向客户端广播游戏开始事件
     this.broadcast("game-start");
     // 等待所有玩家都已做出选择的时刻
@@ -49,18 +57,6 @@ export default class RPSGame extends AutoStartGame {
       winnerId: winner ? winner.userId : null,
     });
     debug("RPS end");
-    // 派发游戏结束事件通知 Reception 回收房间
-    // 重要：必须保证所有可能的游戏逻辑最后都会派发该事件。没有派发该事件的房间会一直存在。
-    this.emit(GameEvent.END);
-  }
-
-  public terminate() {
-    // 将游戏 Room 的 _open 属性标记为 false，表示不会再有新的用户加入了。
-    // 客户端可以按照业务需求响应该属性的变化（例如对于还未开始的游戏，客户端可以重新发起匹配请求）。
-    this.room.setCustomProperties({
-      _open: false,
-    });
-    return super.terminate();
   }
 
   /**

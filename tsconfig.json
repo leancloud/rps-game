@@ -4,6 +4,7 @@
     "module": "commonjs",
     "strict": true,
     "sourceMap": true,
+    "experimentalDecorators": true,
     "outDir": "build"
   },
   "include": ["src/**/*", "benchmark/**/*"],
