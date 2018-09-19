@@ -130,20 +130,20 @@ export default abstract class Game extends EventEmitter {
    * 获取指定的自定义事件，指定 player 发送的事件流。
    * 参阅 http://reactivex.io/rxjs 了解更多。
    */
-  protected getStream(eventId: CustomEventId, player?: Player, timeout?: number) {
+  protected getStream(eventId?: CustomEventId, player?: Player, timeout?: number) {
     return this.customEvents.pipe(
-      filter(({ eventId: evId }) => evId === eventId),
+      eventId === undefined ? tap() : filter(({ eventId: evId }) => evId === eventId),
       player === undefined ? tap() : filter(({ senderId }) => senderId === player.actorId),
       timeout === undefined ? tap() : takeUntil(timer(timeout)),
     );
   }
 
   /**
-   * 获取指定的自定义事件，指定 player 发送的第一个事件的流。
+   * 获取指定的自定义事件，指定 player 发送的从现在开始算的第一个事件的流。
    * 参阅 http://reactivex.io/rxjs 了解更多。
    */
-  protected takeFirst(eventId: CustomEventId, player?: Player, timeout?: number) {
-    return this.getStream(eventId, player).pipe(first());
+  protected takeFirst(eventId?: CustomEventId, player?: Player, timeout?: number) {
+    return this.getStream(eventId, player, timeout).pipe(first());
   }
 
   protected destroy() {
