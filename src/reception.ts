@@ -66,15 +66,8 @@ export default class Reception<T extends Game> {
     };
   }
 
-  public makeReservation(playerId: string) {
-    if (!this.open) {
-      throw new Error("Reception closed.");
-    }
-    if (playerId in this.waitingList) {
-      throw new Error("Already in queue.");
-    }
-    this.waitingList.push(playerId);
-    debug(`add [${playerId}] to waitingList %o`, this.waitingList);
+  public async makeReservation(playerId: string) {
+    this.addToWaitingList(playerId);
     const result = listenNodeEE<Room>(this.ee, playerId, `${playerId}:error`);
     this.startMatch().catch(console.error);
     return result;
@@ -85,6 +78,17 @@ export default class Reception<T extends Game> {
     this.open = false;
     // 等待所有游戏结束
     return Promise.all(Array.from(this.games).map((game) => game.terminate()));
+  }
+
+  private addToWaitingList(playerId: string) {
+    if (!this.open) {
+      throw new Error("Reception closed.");
+    }
+    if (playerId in this.waitingList) {
+      throw new Error("Already in queue.");
+    }
+    this.waitingList.push(playerId);
+    debug(`add [${playerId}] to waitingList %o`, this.waitingList);
   }
 
   /**
