@@ -1,12 +1,9 @@
 import GameManager from "../src/game-manager";
 import RPSGame from "../src/rps-game";
 
-class LongWaitingRPSGame extends RPSGame {
-  public reservationHoldTime = 10000000;
-}
-
-const gameManager = new GameManager(LongWaitingRPSGame, {
+const gameManager = new GameManager(RPSGame, {
   concurrency: 2,
+  reservationHoldTime: 10000000,
 });
 
 const PLAYER_COUNT = 1000;

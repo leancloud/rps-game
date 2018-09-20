@@ -45,11 +45,6 @@ export default abstract class Game extends EventEmitter {
   public registeredPlayers = new Set<string>();
 
   /**
-   * 匹配成功后座位的保留时间，超过这个时间后该座位将被释放。
-   */
-  public reservationHoldTime = 10000;
-
-  /**
    * customEvents Observable
    */
   protected customEvents = fromEvent<PlayEvent[Event.CUSTOM_EVENT]>(

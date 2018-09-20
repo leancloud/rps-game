@@ -38,13 +38,18 @@ export default class GameManager<T extends Game> {
     );
   }
   private queue: PQueue;
+  private reservationHoldTime: number;
 
   constructor(private gameClass: IGameConstructor<T>, {
+    // 创建游戏的并发数
     concurrency = 1,
+    // 匹配成功后座位的保留时间，超过这个时间后该座位将被释放。
+    reservationHoldTime = 10000,
   } = {}) {
     this.queue = new PQueue({
       concurrency,
     });
+    this.reservationHoldTime = reservationHoldTime;
   }
 
   public getStatus() {
@@ -115,7 +120,7 @@ export default class GameManager<T extends Game> {
     // 订位超时未加入房间的话释放该位置
     setTimeout(() => {
       this.checkReservation(game, playerId);
-    }, game.reservationHoldTime || 10000);
+    }, this.reservationHoldTime);
   }
 
   private checkReservation(game: Game, playerId: string) {
