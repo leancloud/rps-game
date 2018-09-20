@@ -34,7 +34,7 @@ export default class GameManager<T extends Game> {
   private games = new Set<Game>();
   private get availableGames() {
     return Array.from(this.games).filter(
-      (game) => game.room.visible && game.availableSeatCount !== 0,
+      (game) => game.room.opened && game.availableSeatCount !== 0,
     );
   }
   private queue: PQueue;

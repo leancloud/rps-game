@@ -17,17 +17,15 @@ export default class RPSGame extends AutomaticGame {
   public reservationHoldTime = 12000;
 
   public terminate() {
-    // 将游戏 Room 的 _open 属性标记为 false，表示不会再有新的用户加入了。
-    // 客户端可以按照业务需求响应该属性的变化（例如对于还未开始的游戏，客户端可以重新发起匹配请求）。
-    this.room.setCustomProperties({
-      _open: false,
-    });
+    // 将游戏 Room 的 open 属性标记为 false，不再允许用户加入了。
+    // 客户端可以按照业务需求响应该属性的变化（例如对于还未开始的游戏，客户端可以重新发起加入新游戏请求）。
+    this.masterClient.setRoomOpened(false);
     return super.terminate();
   }
 
   protected async start(): Promise<void> {
     // 标记房间不再可加入
-    this.masterClient.setRoomVisible(false);
+    this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件
     this.broadcast("game-start");
     // 等待所有玩家都已做出选择的时刻
