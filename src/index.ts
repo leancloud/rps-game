@@ -32,7 +32,7 @@ app.post("/reservation", async (req, res, next) => {
       throw new Error("Missing playerId");
     }
     debug(`Making reservation for player[${playerId}]`);
-    const room = await gameManager.makeReservation(playerId);
+    const { room } = await gameManager.makeReservation(playerId);
     debug(`Seat reserved, room: ${room.name}`);
     return res.json({
       roomName: room.name,

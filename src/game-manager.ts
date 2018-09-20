@@ -91,10 +91,8 @@ export default class GameManager<T extends Game> {
         this.addGame(game);
       }
       this.reserveSeats(game, playerId);
-      return game;
-    }).then((game) => {
       debug(`Reservation completed: %o`, game.room.name);
-      return game.room;
+      return game;
     });
   }
 
