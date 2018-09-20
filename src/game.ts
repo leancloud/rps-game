@@ -23,8 +23,8 @@ interface ICustomEventPayload {
 export default abstract class Game extends EventEmitter {
   public get availableSeatCount() {
     return (
-      this.room.maxPlayerCount -
-      this.room.playerList.length -
+      (this.constructor as typeof Game).playerLimit -
+      this.players.length -
       this.registeredPlayers.size
     );
   }

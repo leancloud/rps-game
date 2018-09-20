@@ -3,9 +3,8 @@ import cors = require("cors");
 import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
-import _ = require("lodash");
 import { APP_ID, MASTER_KEY } from "./configs";
-import Reception from "./reception";
+import GameManager from "./game-manager";
 import PRSGame from "./rps-game";
 
 const app = express();
@@ -19,7 +18,9 @@ app.get("/", (req, res) => {
     `);
 });
 
-const reception = new Reception(PRSGame);
+const gameManager = new GameManager(PRSGame, {
+  concurrency: 2,
+});
 
 const debug = d("ClientEngine");
 
@@ -31,7 +32,7 @@ app.post("/match", async (req, res, next) => {
       throw new Error("Missing playerId");
     }
     debug(`Match player[${playerId}]`);
-    const room = await reception.makeReservation(playerId);
+    const room = await gameManager.makeReservation(playerId);
     debug(`Seat reserved, room: ${room.name}`);
     return res.json({
       roomName: room.name,
@@ -52,7 +53,7 @@ app.use("/admin", basicAuth({
 }));
 
 app.get("/admin/status", (req, res) => {
-  res.json(reception.getStatus());
+  res.json(gameManager.getStatus());
 });
 
 if (process.env.SERVE_DOCS === "1") {
@@ -63,16 +64,16 @@ app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
-  debug("SIGTERM recieved. Closing the reception.");
+  debug("SIGTERM recieved. Closing the gameManager.");
   try {
-    await reception.close();
+    await gameManager.close();
     debug("Shutting down.");
     setTimeout(() => {
       process.exit(0);
     }, 100);
   } catch (error) {
     // 如果发生了异常，什么都不做，Client Engine 在超时后会 SIGKILL 掉进程
-    console.error("Closing reception failed:");
+    console.error("Closing gameManager failed:");
     console.error(error);
   }
 });

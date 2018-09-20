@@ -28,6 +28,7 @@
     "express-basic-auth": "^1.1.5",
     "lodash": "^4.17.10",
     "nanoid": "^1.2.1",
+    "p-queue": "^3.0.0",
     "rxjs": "^6.3.2"
   },
   "engines": {
@@ -39,6 +40,7 @@
     "@types/express": "^4.16.0",
     "@types/lodash": "^4.14.116",
     "@types/nanoid": "^1.0.0",
+    "@types/p-queue": "^2.3.1",
     "memory-usage": "^1.2.1",
     "tslint": "^5.11.0",
     "typedoc": "^0.12.0",

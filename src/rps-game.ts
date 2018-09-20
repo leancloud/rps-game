@@ -26,6 +26,8 @@ export default class RPSGame extends AutomaticGame {
   }
 
   protected async start(): Promise<void> {
+    // 标记房间不再可加入
+    this.masterClient.setRoomVisible(false);
     // 向客户端广播游戏开始事件
     this.broadcast("game-start");
     // 等待所有玩家都已做出选择的时刻
