@@ -25,13 +25,13 @@ const gameManager = new GameManager(PRSGame, {
 const debug = d("ClientEngine");
 
 // TODO: 这个接口需要鉴权与流控
-app.post("/match", async (req, res, next) => {
+app.post("/reservation", async (req, res, next) => {
   try {
     const playerId: string = req.body.playerId;
     if (typeof playerId !== "string") {
       throw new Error("Missing playerId");
     }
-    debug(`Match player[${playerId}]`);
+    debug(`Making reservation for player[${playerId}]`);
     const room = await gameManager.makeReservation(playerId);
     debug(`Seat reserved, room: ${room.name}`);
     return res.json({

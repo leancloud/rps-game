@@ -93,7 +93,7 @@ export default class GameManager<T extends Game> {
       this.reserveSeats(game, playerId);
       return game;
     }).then((game) => {
-      debug(`match succeed with game %o`, game.room.name);
+      debug(`Reservation completed: %o`, game.room.name);
       return game.room;
     });
   }
