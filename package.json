@@ -9,7 +9,8 @@
     "lint:fix": "tslint src/* --fix",
     "build": "tsc --build tsconfig.json",
     "docs": "typedoc src --out docs",
-    "start": "node build/src/index.js",
+    "start": "node -r source-map-support/register build/src/index.js",
+    "dev": "npm run build && npm run start",
     "postinstall": "npm run build && npm run docs",
     "benchmark": "npm run build && memory-usage build/benchmark/empty-room.js"
   },
@@ -29,7 +30,8 @@
     "lodash": "^4.17.10",
     "nanoid": "^1.2.1",
     "p-queue": "^3.0.0",
-    "rxjs": "^6.3.2"
+    "rxjs": "^6.3.2",
+    "source-map-support": "^0.5.9"
   },
   "engines": {
     "node": "10.x"
