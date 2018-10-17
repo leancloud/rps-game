@@ -25,9 +25,6 @@ export function startOnRoomFull() {
 
       private watchPlayers() {
         const playerJoinedHandler = ({ newPlayer }: { newPlayer: Player }) => {
-          if (this.registeredPlayers.has(newPlayer.userId)) {
-            this.registeredPlayers.delete(newPlayer.userId);
-          }
           if (
             this.players.length ===
             (this.constructor as typeof AutomaticGame).playerLimit

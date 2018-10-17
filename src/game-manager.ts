@@ -114,18 +114,14 @@ export default class GameManager<T extends Game> {
       throw new Error(`Reserve seats fail: room[${game.room.name}] is full`);
     }
     // 预订成功
-    game.registeredPlayers.add(playerId);
+    game.makeReservation(playerId);
     // 订位超时未加入房间的话释放该位置
     setTimeout(() => {
-      this.checkReservation(game, playerId);
+      if (game.registeredPlayers.has(playerId)) {
+        debug(`Reservation[${playerId}] timeout, canceling.`);
+        game.cancelReservation(playerId);
+      }
     }, this.reservationHoldTime);
-  }
-
-  private checkReservation(game: Game, playerId: string) {
-    if (game.registeredPlayers.has(playerId)) {
-      debug(`Reservation[${playerId}] timeout, canceling.`);
-      game.registeredPlayers.delete(playerId);
-    }
   }
 
   private async createNewGame() {

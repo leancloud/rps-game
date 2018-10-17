@@ -7,11 +7,14 @@ import {
   ReceiverGroup,
   Room,
 } from "@leancloud/play";
+import d = require("debug");
 import { EventEmitter } from "events";
 import _ = require("lodash");
 import { fromEvent, timer } from "rxjs";
 import { filter, first, take, takeUntil, tap } from "rxjs/operators";
 import { listenNodeEE } from "./utils";
+
+const debug = d("ClientEngine:Game");
 
 type CustomEventId = number | string;
 interface ICustomEventPayload {
@@ -54,7 +57,22 @@ export default abstract class Game extends EventEmitter {
 
   constructor(public room: Room, public masterClient: Play) {
     super();
+    masterClient.on(Event.PLAYER_ROOM_JOINED, ({ newPlayer }: { newPlayer: Player }) => {
+      if (this.registeredPlayers.has(newPlayer.userId)) {
+        this.registeredPlayers.delete(newPlayer.userId);
+      }
+    });
     this.customEvents.subscribe(console.log);
+  }
+
+  public makeReservation(playerId: string) {
+    this.registeredPlayers.add(playerId);
+    debug(`Reservation[${playerId}] done.`);
+  }
+
+  public cancelReservation(playerId: string) {
+    this.registeredPlayers.delete(playerId);
+    debug(`Reservation[${playerId}] canceled.`);
   }
 
   /**
