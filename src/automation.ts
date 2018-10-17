@@ -15,7 +15,7 @@ export const AutomaticGameEvent = {
  * 在房间满员时自动派发 AutomaticGameEvent.ROOM_FULL 事件
  * @returns a Game decorator
  */
-export function autoStart() {
+export function startOnRoomFull() {
   return <T extends { new (...args: any[]): Game }>(gameClass: T) => {
     return class extends gameClass {
       constructor(...params: any[]) {
@@ -81,7 +81,7 @@ export function autoDestroy({ checkInterval = 10000 } = {}) {
  * 子类需要实现 start 方法。
  */
 @autoDestroy()
-@autoStart()
+@startOnRoomFull()
 export class AutomaticGame extends Game {
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);

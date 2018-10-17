@@ -1,4 +1,4 @@
-import { Event } from "@leancloud/play";
+import { Event, Play, Room } from "@leancloud/play";
 import d = require("debug");
 import _ = require("lodash");
 import { tap } from "rxjs/operators";
@@ -15,6 +15,12 @@ const wins = [1, 2, 0];
  */
 export default class RPSGame extends AutomaticGame {
   public reservationHoldTime = 12000;
+
+  constructor(room: Room, masterClient: Play) {
+    super(room, masterClient);
+    // 游戏创建后立刻执行的逻辑
+    // 可用于实现游戏等待阶段（即游戏创建到游戏开始之间）的逻辑
+  }
 
   public terminate() {
     // 将游戏 Room 的 open 属性标记为 false，不再允许用户加入了。
