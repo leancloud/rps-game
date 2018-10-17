@@ -29,7 +29,7 @@ export default class RPSGame extends AutomaticGame {
     return super.terminate();
   }
 
-  protected async start(): Promise<void> {
+  protected async onRoomFull(): Promise<void> {
     // 标记房间不再可加入
     this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件

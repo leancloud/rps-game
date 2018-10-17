@@ -15,7 +15,7 @@ export const AutomaticGameEvent = {
  * 在房间满员时自动派发 AutomaticGameEvent.ROOM_FULL 事件
  * @returns a Game decorator
  */
-export function startOnRoomFull() {
+export function watchRoomFull() {
   return <T extends { new (...args: any[]): Game }>(gameClass: T) => {
     return class extends gameClass {
       constructor(...params: any[]) {
@@ -74,17 +74,17 @@ export function autoDestroy({ checkInterval = 10000 } = {}) {
 }
 
 /**
- * 当房间满员的时候自动开始，所有玩家离开后自动销毁的游戏。
- * 子类需要实现 start 方法。
+ * 当房间满员时调用 onRoomFull，所有玩家离开后自动销毁的游戏。
+ * 子类可以在 onRoomFull 方法中实现游戏逻辑。
  */
 @autoDestroy()
-@startOnRoomFull()
+@watchRoomFull()
 export class AutomaticGame extends Game {
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
-    this.once(AutomaticGameEvent.ROOM_FULL, () => this.start());
+    this.once(AutomaticGameEvent.ROOM_FULL, () => this.onRoomFull());
   }
-  protected start() {
-    throw new Error("Not implemented.");
+  protected onRoomFull() {
+    // 房间满员
   }
 }
