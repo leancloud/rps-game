@@ -14,8 +14,6 @@ const wins = [1, 2, 0];
  * 石头剪刀布游戏
  */
 export default class RPSGame extends AutomaticGame {
-  public reservationHoldTime = 12000;
-
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
     // 游戏创建后立刻执行的逻辑
