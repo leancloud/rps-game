@@ -31,7 +31,7 @@ interface IGameConstructor<T extends Game> {
  */
 export default class GameManager<T extends Game> {
   public open = true;
-  private games = new Set<Game>();
+  private games = new Set<T>();
   private get availableGames() {
     return Array.from(this.games).filter(
       (game) => game.room.opened && game.availableSeatCount !== 0,
@@ -80,7 +80,7 @@ export default class GameManager<T extends Game> {
       if (!this.open) {
         throw new Error("GameManager closed.");
       }
-      let game;
+      let game: T;
       const { availableGames } = this;
       if (availableGames.length > 0) {
         game = availableGames[0];
@@ -89,6 +89,7 @@ export default class GameManager<T extends Game> {
         console.log("before start", process.memoryUsage());
         game = await this.createNewGame();
         this.addGame(game);
+        game.once(GameEvent.END, () => this.remove(game));
       }
       this.reserveSeats(game, playerId);
       debug(`Reservation completed: %o`, game.room.name);
@@ -103,11 +104,11 @@ export default class GameManager<T extends Game> {
     return Promise.all(Array.from(this.games).map((game) => game.terminate()));
   }
 
-  private addGame(game: Game) {
+  private addGame(game: T) {
     this.games.add(game);
   }
 
-  private reserveSeats(game: Game, playerId: string) {
+  private reserveSeats(game: T, playerId: string) {
     const { availableSeatCount } = game;
     if (availableSeatCount <= 0) {
       // 这种情况不应该出现
@@ -140,11 +141,7 @@ export default class GameManager<T extends Game> {
       },
     });
     return listen(masterClient, Event.ROOM_CREATED, Event.ROOM_CREATE_FAILED).then(
-      () => {
-        const game = new this.gameClass(masterClient.room, masterClient);
-        game.once(GameEvent.END, () => this.remove(game));
-        return game;
-      },
+      () => new this.gameClass(masterClient.room, masterClient),
     );
   }
 
