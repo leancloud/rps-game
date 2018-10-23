@@ -72,19 +72,3 @@ export function autoDestroy({ checkInterval = 10000 } = {}) {
     };
   };
 }
-
-/**
- * 当房间满员时调用 onRoomFull，所有玩家离开后自动销毁的游戏。
- * 子类可以在 onRoomFull 方法中实现游戏逻辑。
- */
-@autoDestroy()
-@watchRoomFull()
-export class AutomaticGame extends Game {
-  constructor(room: Room, masterClient: Play) {
-    super(room, masterClient);
-    this.once(AutomaticGameEvent.ROOM_FULL, () => this.onRoomFull());
-  }
-  protected onRoomFull() {
-    // 房间满员
-  }
-}

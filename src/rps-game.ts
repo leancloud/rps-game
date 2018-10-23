@@ -2,7 +2,8 @@ import { Event, Play, Room } from "@leancloud/play";
 import d = require("debug");
 import _ = require("lodash");
 import { tap } from "rxjs/operators";
-import { AutomaticGame } from "./automation";
+import { autoDestroy, AutomaticGameEvent, watchRoomFull } from "./automation";
+import Game from "./game";
 import { listen } from "./utils";
 
 const debug = d("RPS");
@@ -13,11 +14,13 @@ const wins = [1, 2, 0];
 /**
  * 石头剪刀布游戏
  */
-export default class RPSGame extends AutomaticGame {
+@watchRoomFull()
+@autoDestroy()
+ export default class RPSGame extends Game {
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
     // 游戏创建后立刻执行的逻辑
-    // 可用于实现游戏等待阶段（即游戏创建到游戏开始之间）的逻辑
+    this.once(AutomaticGameEvent.ROOM_FULL, () => this.start());
   }
 
   public terminate() {
@@ -27,7 +30,7 @@ export default class RPSGame extends AutomaticGame {
     return super.terminate();
   }
 
-  protected async onRoomFull(): Promise<void> {
+  protected async start() {
     // 标记房间不再可加入
     this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件
