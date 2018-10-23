@@ -135,6 +135,7 @@ export default class GameManager<T extends Game> {
         flag:
           // tslint:disable-next-line:no-bitwise
           CreateRoomFlag.FixedMaster |
+          CreateRoomFlag.MasterSetMaster |
           CreateRoomFlag.MasterUpdateRoomProperties,
         maxPlayerCount: this.gameClass.playerLimit + 1, // masterClient should be included
         visible: true,
