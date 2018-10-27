@@ -1,7 +1,12 @@
 import { EventEmitter as PlayEventEmitter } from "@leancloud/play";
 import { EventEmitter } from "events";
+import generate = require("nanoid/generate");
 
-export function listen<T, K extends keyof T>(target: PlayEventEmitter<T>, resolveEvent: K, rejectEvent?: string) {
+export function listen<T, K extends keyof T, L extends keyof T>(
+  target: PlayEventEmitter<T>,
+  resolveEvent: K,
+  rejectEvent?: L,
+) {
   return new Promise<T[K]>((resolve, reject) => {
     target.once(resolveEvent, resolve);
     if (rejectEvent) {
@@ -10,7 +15,11 @@ export function listen<T, K extends keyof T>(target: PlayEventEmitter<T>, resolv
   });
 }
 
-export function listenNodeEE<T>(target: EventEmitter, resolveEvent: string | symbol, rejectEvent?: string | symbol) {
+export function listenNodeEE<T>(
+  target: EventEmitter,
+  resolveEvent: string | symbol,
+  rejectEvent?: string | symbol,
+) {
   return new Promise<T>((resolve, reject) => {
     let rejectCallback: (error: Error) => any;
     const resolveCallback = (payload: T) => {
@@ -29,3 +38,7 @@ export function listenNodeEE<T>(target: EventEmitter, resolveEvent: string | sym
     }
   });
 }
+
+const alphabet =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+export const generateId = (length = 10) => generate(alphabet, length);

@@ -1,10 +1,11 @@
 import { CreateRoomFlag, Event, Play, Region, Room } from "@leancloud/play";
 import d = require("debug");
-import generate = require("nanoid/generate");
+import { EventEmitter } from "events";
 import PQueue = require("p-queue");
 import { APP_ID, APP_KEY } from "./configs";
 import Game, { GameEvent } from "./game";
-import { listen } from "./utils";
+import { IConsumer, LOAD_CHANGE } from "./redis-load-balancer";
+import { generateId, listen } from "./utils";
 
 const debug = d("ClientEngine:GameManager");
 
@@ -15,9 +16,7 @@ const createNewMasterClient = () => {
     appKey: APP_KEY,
     region: Region.NorthChina,
   });
-  const alphabet =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
-  masterClient.userId = generate(alphabet, 10);
+  masterClient.userId = generateId();
   return masterClient;
 };
 
@@ -29,7 +28,7 @@ interface IGameConstructor<T extends Game> {
 /**
  * GameManager 负责游戏房间的分配
  */
-export default class GameManager<T extends Game> {
+export default class GameManager<T extends Game> extends EventEmitter implements IConsumer<string, string> {
   public open = true;
   private games = new Set<T>();
   private get availableGames() {
@@ -46,10 +45,15 @@ export default class GameManager<T extends Game> {
     // 匹配成功后座位的保留时间，超过这个时间后该座位将被释放。
     reservationHoldTime = 10000,
   } = {}) {
+    super();
     this.queue = new PQueue({
       concurrency,
     });
     this.reservationHoldTime = reservationHoldTime;
+  }
+
+  public getLoad() {
+    return this.games.size;
   }
 
   public getStatus() {
@@ -70,34 +74,37 @@ export default class GameManager<T extends Game> {
         registeredPlayers: Array.from(registeredPlayers.values()),
         visible,
       })),
+      load: this.getLoad(),
       open: this.open,
       queue: this.queue.size,
     };
   }
 
-  public async makeReservation(playerId: string) {
-    return this.queue.add(async () => {
-      if (!this.open) {
-        throw new Error("GameManager closed.");
-      }
-      let game: T;
-      const { availableGames } = this;
-      if (availableGames.length > 0) {
-        game = availableGames[0];
-      } else {
-        debug(`No game available, creating a new one`);
-        console.log("before start", process.memoryUsage());
-        game = await this.createNewGame();
-        this.addGame(game);
-        game.once(GameEvent.END, () => this.remove(game));
-      }
-      this.reserveSeats(game, playerId);
-      debug(`Reservation completed: %o`, game.room.name);
-      return game;
-    });
+  public async consume(playerId: string) {
+    return this.makeReservation(playerId);
   }
 
-  public close() {
+  public async makeReservation(playerId: string) {
+    if (!this.open) {
+      throw new Error("GameManager closed.");
+    }
+    let game: T;
+    const { availableGames } = this;
+    if (availableGames.length > 0) {
+      game = availableGames[0];
+    } else {
+      debug(`No game available, creating a new one`);
+      console.log("before start", process.memoryUsage());
+      game = await this.queue.add(() => this.createNewGame());
+      this.addGame(game);
+      game.once(GameEvent.END, () => this.remove(game));
+    }
+    this.reserveSeats(game, playerId);
+    debug(`Reservation completed: %o`, game.room.name);
+    return game.room.name;
+  }
+
+  public async close() {
     // 停止接受新的请求
     this.open = false;
     // 等待所有游戏结束
@@ -106,6 +113,7 @@ export default class GameManager<T extends Game> {
 
   private addGame(game: T) {
     this.games.add(game);
+    this.emit(LOAD_CHANGE);
   }
 
   private reserveSeats(game: T, playerId: string) {
@@ -149,5 +157,6 @@ export default class GameManager<T extends Game> {
   private remove(game: T) {
     debug(`Removing [${game.room.name}].`);
     this.games.delete(game);
+    this.emit(LOAD_CHANGE);
   }
 }
