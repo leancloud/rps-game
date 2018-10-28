@@ -36,8 +36,8 @@ export default class RedisPRCNode<T, U> {
     private handler: (params: T) => Promise<U>,
     redisUrl?: string,
     {
-      pubClient = new Redis(redisUrl),
-      subClient = new Redis(redisUrl),
+      pubClient = new Redis(redisUrl).on("error", debug),
+      subClient = new Redis(redisUrl).on("error", debug),
     } = {},
   ) {
     this.pubClient = pubClient;
