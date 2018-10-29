@@ -1,11 +1,10 @@
+import { GameManager, RedisLoadBalancer } from "@leancloud/client-engine";
 import bodyParser = require("body-parser");
 import cors = require("cors");
 import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
-import { APP_ID, MASTER_KEY } from "./configs";
-import GameManager from "./game-manager";
-import RedisLoadBalancer from "./redis-load-balancer";
+import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
 import PRSGame from "./rps-game";
 
 const app = express();
@@ -19,13 +18,22 @@ app.get("/", (req, res) => {
     `);
 });
 
-const gameManager = new GameManager(PRSGame, {
-  concurrency: 2,
-});
+const gameManager = new GameManager(
+  PRSGame,
+  APP_ID,
+  APP_KEY,
+  {
+    concurrency: 2,
+  },
+);
 
-const redisLB = new RedisLoadBalancer(gameManager, process.env.REDIS_URL_CLIENT_ENGINE_SAMPLE_LB, {
-  poolId: APP_ID.slice(0, 5),
-});
+const redisLB = new RedisLoadBalancer(
+  gameManager,
+  process.env.REDIS_URL_CLIENT_ENGINE_SAMPLE_LB,
+  {
+    poolId: APP_ID.slice(0, 5),
+  },
+);
 redisLB.on("online", () => console.log("LB redis connected")).on("offline", () => {
   console.warn(
 `Can not connect to Redis server. Client Engine will keep running in the offline mode.
@@ -69,10 +77,6 @@ app.get("/admin/status", (req, res) => {
     redisLB: redisLB.getStatus(),
   });
 });
-
-if (process.env.SERVE_DOCS === "1") {
-  app.use("/docs", express.static("docs"));
-}
 
 app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
 

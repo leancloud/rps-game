@@ -1,10 +1,8 @@
+import { autoDestroy, AutomaticGameEvent, Game, listen, watchRoomFull } from "@leancloud/client-engine";
 import { Event, Play, Room } from "@leancloud/play";
 import d = require("debug");
 import _ = require("lodash");
 import { tap } from "rxjs/operators";
-import { autoDestroy, AutomaticGameEvent, watchRoomFull } from "./automation";
-import Game from "./game";
-import { listen } from "./utils";
 
 const debug = d("RPS");
 

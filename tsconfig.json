@@ -7,6 +7,6 @@
     "experimentalDecorators": true,
     "outDir": "build"
   },
-  "include": ["src/**/*", "benchmark/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules"]
 }
