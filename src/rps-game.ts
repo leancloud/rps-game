@@ -18,7 +18,7 @@ const wins = [1, 2, 0];
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
     // 游戏创建后立刻执行的逻辑
-    this.once(AutomaticGameEvent.ROOM_FULL, () => this.start());
+    this.once(AutomaticGameEvent.ROOM_FULL, this.start);
   }
 
   public terminate() {
@@ -28,7 +28,7 @@ const wins = [1, 2, 0];
     return super.terminate();
   }
 
-  protected async start() {
+  protected start = async () => {
     // 标记房间不再可加入
     this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件
