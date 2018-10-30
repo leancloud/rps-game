@@ -29,14 +29,14 @@ const gameManager = new GameManager(
 
 const redisLB = new RedisLoadBalancer(
   gameManager,
-  process.env.REDIS_URL_CLIENT_ENGINE_SAMPLE_LB,
+  process.env.REDIS_URL__CLIENT_ENGINE,
   {
     poolId: `${APP_ID.slice(0, 5)}-${process.env.LEANCLOUD_APP_ENV || "development"}`,
   },
 );
 redisLB.on("online", () => console.log("LB redis connected")).on("offline", () => {
   console.warn(
-`Can not connect to Redis server. Client Engine will keep running in the offline mode.
+`Can not connect to Redis server. Client Engine will keep running in standalone mode.
 It's probably fine if you are running it locally without a Redis server. Otherwise, check project configs.`,
   );
 });
