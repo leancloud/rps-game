@@ -71,10 +71,10 @@ app.use("/admin", basicAuth({
   users: { admin: MASTER_KEY },
 }));
 
-app.get("/admin/status", (req, res) => {
+app.get("/admin/status", async (req, res) => {
   res.json({
-    gameManager: gameManager.getStatus(),
-    redisLB: redisLB.getStatus(),
+    gameManager: await gameManager.getStatus(),
+    redisLB: await redisLB.getStatus(),
   });
 });
 
