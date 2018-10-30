@@ -31,7 +31,7 @@ const redisLB = new RedisLoadBalancer(
   gameManager,
   process.env.REDIS_URL_CLIENT_ENGINE_SAMPLE_LB,
   {
-    poolId: `${APP_ID.slice(0, 5)}-${process.env.NODE_ENV || "development"}`,
+    poolId: `${APP_ID.slice(0, 5)}-${process.env.LEANCLOUD_APP_ENV || "development"}`,
   },
 );
 redisLB.on("online", () => console.log("LB redis connected")).on("offline", () => {
