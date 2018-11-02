@@ -1,4 +1,4 @@
-import { GameManager, RedisLoadBalancer } from "@leancloud/client-engine";
+import { GameManager, RedisLoadBalancer, RedisLoadBalancerConsumerEvent } from "@leancloud/client-engine";
 import bodyParser = require("body-parser");
 import cors = require("cors");
 import d = require("debug");
@@ -25,7 +25,7 @@ const gameManager = new GameManager(
   {
     concurrency: 2,
   },
-);
+).on(RedisLoadBalancerConsumerEvent.LOAD_CHANGE, () => debug(`Load: ${gameManager.getLoad()}`));
 
 const redisLB = new RedisLoadBalancer(
   gameManager,
