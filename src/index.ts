@@ -71,11 +71,15 @@ app.use("/admin", basicAuth({
   users: { admin: MASTER_KEY },
 }));
 
-app.get("/admin/status", async (req, res) => {
-  res.json({
-    gameManager: await gameManager.getStatus(),
-    redisLB: await redisLB.getStatus(),
-  });
+app.get("/admin/status", async (req, res, next) => {
+  try {
+    res.json({
+      gameManager: await gameManager.getStatus(),
+      redisLB: await redisLB.getStatus(),
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.listen(process.env.LEANCLOUD_APP_PORT || 3000);
