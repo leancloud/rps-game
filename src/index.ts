@@ -4,6 +4,7 @@ import cors = require("cors");
 import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
+import os = require("os");
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
 import PRSGame from "./rps-game";
 
@@ -75,6 +76,8 @@ app.get("/admin/status", async (req, res, next) => {
   try {
     res.json({
       gameManager: await gameManager.getStatus(),
+      memoryUsage: process.memoryUsage(),
+      osLoadavg: os.loadavg(),
       redisLB: await redisLB.getStatus(),
     });
   } catch (error) {
