@@ -19,8 +19,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@leancloud/client-engine": "^0.2.1",
-    "@leancloud/play": "^0.13.24",
+    "@leancloud/client-engine": "^0.3.0",
+    "@leancloud/play": "^0.13.27",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
     "debug": "^4.1.0",
