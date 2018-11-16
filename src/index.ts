@@ -1,4 +1,10 @@
-import { GameManager, RedisLoadBalancer, RedisLoadBalancerConsumerEvent } from "@leancloud/client-engine";
+import {
+  Game,
+  GameManager,
+  ICreateGameOptions,
+  RedisLoadBalancer,
+  RedisLoadBalancerConsumerEvent,
+} from "@leancloud/client-engine";
 import bodyParser = require("body-parser");
 import cors = require("cors");
 import d = require("debug");
@@ -19,7 +25,13 @@ app.get("/", (req, res) => {
     `);
 });
 
-const gameManager = new GameManager(
+class SampleGameManager<T extends Game> extends GameManager<T> {
+  public async consume(playerId: string, options: ICreateGameOptions) {
+    return this.makeReservation(playerId, options);
+  }
+}
+
+const gameManager = new SampleGameManager(
   PRSGame,
   APP_ID,
   APP_KEY,
@@ -29,7 +41,7 @@ const gameManager = new GameManager(
     // 需要先 import { Region } from "@leancloud/play";
     // region: Region.NorthChina,
   },
-).on(RedisLoadBalancerConsumerEvent.LOAD_CHANGE, () => debug(`Load: ${gameManager.getLoad()}`));
+).on(RedisLoadBalancerConsumerEvent.LOAD_CHANGE, () => debug(`Load: ${gameManager.load}`));
 
 const redisLB = new RedisLoadBalancer(
   gameManager,
@@ -50,12 +62,18 @@ const debug = d("ClientEngine");
 // TODO: 这个接口需要鉴权与流控
 app.post("/reservation", async (req, res, next) => {
   try {
-    const playerId: string = req.body.playerId;
+    const {
+      playerId,
+      createGameOptions,
+    } = req.body as {
+      playerId: any;
+      createGameOptions: ICreateGameOptions;
+    };
     if (typeof playerId !== "string") {
       throw new Error("Missing playerId");
     }
     debug(`Making reservation for player[${playerId}]`);
-    const roomName = await redisLB.consume(playerId);
+    const roomName = await redisLB.consume(playerId, createGameOptions);
     debug(`Seat reserved, room: ${roomName}`);
     return res.json({
       roomName,
