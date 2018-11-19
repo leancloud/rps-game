@@ -15,6 +15,8 @@ const wins = [1, 2, 0];
 @watchRoomFull()
 @autoDestroy()
  export default class RPSGame extends Game {
+  public static defaultSeatCount = 2;
+
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
     // 游戏创建后立刻执行的逻辑
