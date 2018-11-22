@@ -39,7 +39,7 @@ const wins = [1, 2, 0];
     const playPromise = Promise.all(this.players.map((player) =>
         this.takeFirst("play", player)
           // 向其他玩家转发出牌动作，但是隐藏具体的 choice
-          .pipe(tap(_.bind(this.forwardToTheRests, this, _, () => ({}))))
+          .pipe(tap(_.bind(this.forwardToTheRests, this, _, () => ({})) as typeof RPSGame.prototype.forwardToTheRests))
           .toPromise(),
       ));
     // 监听 player 离开游戏事件
