@@ -1,5 +1,4 @@
 import {
-  GameManager,
   ICreateGameOptions,
   LoadBalancerFactory,
 } from "@leancloud/client-engine";
@@ -10,6 +9,7 @@ import express = require("express");
 import basicAuth = require("express-basic-auth");
 import os = require("os");
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
+import Reception from "./reception";
 import PRSGame from "./rps-game";
 
 const app = express();
@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
     `);
 });
 
-const gameManager = new GameManager(
+const reception = new Reception(
   PRSGame,
   APP_ID,
   APP_KEY,
@@ -41,7 +41,7 @@ const loadBalancerFactory = new LoadBalancerFactory({
 });
 
 const loadBalancer = loadBalancerFactory
-  .bind(gameManager, ["makeReservation"])
+  .bind(reception, ["makeReservation", "createGameAndGetName"])
   .on("online", () => console.log("Load balancer online")).on("offline", () => {
     console.warn(
 `The load balancer can not connect to Redis server. Client Engine will keep running in standalone mode.
@@ -65,7 +65,7 @@ app.post("/reservation", async (req, res, next) => {
       throw new Error("Missing playerId");
     }
     debug(`Making reservation for player[${playerId}]`);
-    const roomName = await gameManager.makeReservation(playerId, createGameOptions);
+    const roomName = await reception.makeReservation(playerId, createGameOptions);
     debug(`Seat reserved, room: ${roomName}`);
     return res.json({
       roomName,
@@ -75,9 +75,28 @@ app.post("/reservation", async (req, res, next) => {
   }
 });
 
-// app.post("/game", cors(), async (req, res, next) => {
-
-// });
+app.post("/game", async (req, res, next) => {
+  try {
+    const {
+      playerId,
+      options,
+    } = req.body as {
+      playerId: any;
+      options: ICreateGameOptions;
+    };
+    if (typeof playerId !== "string") {
+      throw new Error("Missing playerId");
+    }
+    debug(`Creating a new game for player[${playerId}]`);
+    const roomName = await reception.createGameAndGetName(playerId, options);
+    debug(`Game created, room: ${roomName}`);
+    return res.json({
+      roomName,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.use("/admin", basicAuth({
   challenge: true,
@@ -88,10 +107,10 @@ app.use("/admin", basicAuth({
 app.get("/admin/status", async (req, res, next) => {
   try {
     res.json({
-      gameManager: await gameManager.getStatus(),
       loadBalancer: await loadBalancer.getStatus(),
       memoryUsage: process.memoryUsage(),
       osLoadavg: os.loadavg(),
+      reception: await reception.getStatus(),
     });
   } catch (error) {
     next(error);
