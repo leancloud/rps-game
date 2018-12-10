@@ -56,16 +56,14 @@ app.post("/reservation", async (req, res, next) => {
   try {
     const {
       playerId,
-      createGameOptions,
     } = req.body as {
       playerId: any;
-      createGameOptions: ICreateGameOptions;
     };
     if (typeof playerId !== "string") {
       throw new Error("Missing playerId");
     }
     debug(`Making reservation for player[${playerId}]`);
-    const roomName = await reception.makeReservation(playerId, createGameOptions);
+    const roomName = await reception.makeReservation(playerId);
     debug(`Seat reserved, room: ${roomName}`);
     return res.json({
       roomName,
