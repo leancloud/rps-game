@@ -1,20 +1,134 @@
-import { autoDestroy, AutomaticGameEvent, Game, listen, watchRoomFull } from "@leancloud/client-engine";
-import { Event, Play, Room } from "@leancloud/play";
+import { autoDestroy, AutomaticGameEvent, listen, watchRoomFull } from "@leancloud/client-engine";
+import { Event as PlayEvent, Play, Player, Room } from "@leancloud/play";
 import d = require("debug");
-import _ = require("lodash");
-import { tap } from "rxjs/operators";
+import { defineGame, GameActions, GameEvents } from "./stateful-game";
 
 const debug = d("RPS");
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];
 
+const UNKNOWN_CHOICE = -1;
+
+const getWinner = ([player1Choice, player2Choice]: number[], players: Player[])  => {
+  if (player1Choice === player2Choice) {
+    return { draw: true };
+  }
+  return {
+    winnerId: (wins[player1Choice] === player2Choice
+      ? players[0]
+      : players[1]
+    ).actorId,
+  };
+};
+
+declare interface IRPSGameStates {
+  started: boolean;
+  choices: Array<number|null>;
+  result: null | { winnerId?: string } | { draw?: boolean };
+}
+
+enum Action {
+  PLAY,
+}
+declare interface IActionPayloads {
+  [Action.PLAY]: { index: number };
+}
+
+enum Event {
+  GAME_START,
+  PLAYER_LEFT,
+}
+declare interface IEventPayloads {
+  [Event.GAME_START]: void;
+  [Event.PLAYER_LEFT]: void;
+}
+
+const initialStates: IRPSGameStates = {
+  choices: [null, null],
+  result: null,
+  started: false,
+};
+
+const actions: GameActions<Action, IRPSGameStates, IActionPayloads> = {
+  [Action.PLAY](
+    states,
+    { players, actionSenderIndex },
+    { index },
+  ) {
+    const { started, choices } = states;
+    if (!started) {
+      return;
+    }
+    // 如果该玩家已经做出选择，什么都不做
+    if (choices[actionSenderIndex]) {
+      return;
+    }
+    // 更新该玩家的选择
+    choices[actionSenderIndex] = index;
+    // 如果有人还未选择，继续等待
+    if (choices.indexOf(null) === -1) {
+      return;
+    }
+    // 这里的逻辑可能同时在服务端或客户端运行，因此会需要考虑客户端看到的状态是 UNKNOWN_CHOICE 的情况。
+    if (choices.indexOf(UNKNOWN_CHOICE) === -1) {
+      return;
+    }
+    // 计算出赢家并更新到结果中
+    states.result = getWinner(choices as number[], players);
+  },
+};
+
+const events: GameEvents<Event, IRPSGameStates, IEventPayloads> = {
+  [Event.GAME_START](
+    states,
+  ) {
+    states.started = true;
+  },
+  [Event.PLAYER_LEFT](
+    states,
+    game,
+  ) {
+    // 判定留下的唯一玩家为赢家
+    states.result = {
+      winnerId: game.players[0].userId,
+    };
+  },
+};
+
+const filter = (
+  states: IRPSGameStates,
+  player: Player,
+  playerIndex: number,
+) => {
+  if (states.result) {
+    return states;
+  }
+  return {
+    ...states,
+    choices: states.choices.map((choice, index) => {
+      if (index === playerIndex) {
+        return choice;
+      }
+      if (choice === null) {
+        return choice;
+      }
+      return UNKNOWN_CHOICE;
+    }),
+  };
+};
+
 /**
  * 石头剪刀布游戏
  */
 @watchRoomFull()
 @autoDestroy()
- export default class RPSGame extends Game {
+export default class RPSGame extends defineGame({
+  actions,
+  events,
+  filter,
+  initialStates,
+}) {
   public static defaultSeatCount = 2;
 
   constructor(room: Room, masterClient: Play) {
@@ -34,45 +148,8 @@ const wins = [1, 2, 0];
     // 标记房间不再可加入
     this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件
-    this.broadcast("game-start");
-    // 等待所有玩家都已做出选择的时刻
-    const playPromise = Promise.all(this.players.map((player) =>
-        this.takeFirst("play", player)
-          // 向其他玩家转发出牌动作，但是隐藏具体的 choice
-          .pipe(tap(_.bind(this.forwardToTheRests, this, _, () => ({})) as typeof RPSGame.prototype.forwardToTheRests))
-          .toPromise(),
-      ));
+    this.dispatchEvent(Event.GAME_START);
     // 监听 player 离开游戏事件
-    const playerLeftPromise = listen(this.masterClient, Event.PLAYER_ROOM_LEFT);
-    // 取上面两个事件先发生的那个作为结果
-    const result = await Promise.race([playPromise, playerLeftPromise]);
-    debug(result);
-    let choices;
-    let winner;
-    if (Array.isArray(result)) {
-      // 如果都已做出选择，比较得到赢家
-      choices = result.map(({ eventData }) => eventData.index as number);
-      winner = this.getWinner(choices);
-    } else {
-      // 如果某玩家离开了游戏，另一位玩家胜利
-      winner = this.players.find((player) => player !== result.leftPlayer);
-    }
-    // 游戏结束
-    // 向客户端广播游戏结果
-    this.broadcast("game-over", {
-      choices,
-      winnerId: winner ? winner.userId : null,
-    });
-    debug("RPS end");
-  }
-
-  /**
-   * 根据玩家的选择计算赢家
-   * @return 返回胜利的 Player，或者 null 表示平局
-   */
-  private getWinner([player1Choice, player2Choice]: number[]) {
-    if (player1Choice === player2Choice) { return null; }
-    if (wins[player1Choice] === player2Choice) { return this.players[0]; }
-    return this.players[1];
+    listen(this.masterClient, PlayEvent.PLAYER_ROOM_LEFT).then(() => this.dispatchEvent(Event.PLAYER_LEFT));
   }
 }
