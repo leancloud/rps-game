@@ -7,8 +7,9 @@
   "scripts": {
     "lint": "tslint src/*",
     "lint:fix": "tslint src/* --fix",
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.json && NODE_ENV=production parcel build src/client/index.html -d dist/client",
     "start": "node -r source-map-support/register build/index.js",
+    "dev:client": "parcel src/client/index.html -p $LEANCLOUD_APP_PORT --open",
     "dev": "npm run build && npm run start",
     "postinstall": "npm run build"
   },
@@ -29,7 +30,11 @@
     "immer": "^1.8.0",
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
-    "source-map-support": "^0.5.9"
+    "source-map-support": "^0.5.9",
+    "vue-hot-reload-api": "^2.3.1",
+    "vue": "^2.5.21",
+    "vue-class-component": "^6.3.2",
+    "vue-property-decorator": "^7.2.0"
   },
   "engines": {
     "node": "10.x"
@@ -39,8 +44,11 @@
     "@types/debug": "0.0.31",
     "@types/express": "^4.16.0",
     "@types/lodash": "^4.14.117",
+    "@vue/component-compiler-utils": "^2.3.1",
     "axios": "^0.18.0",
+    "parcel-bundler": "^1.10.3",
     "tslint": "^5.11.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.2",
+    "vue-template-compiler": "^2.5.21"
   }
 }
