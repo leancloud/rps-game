@@ -1,6 +1,6 @@
 import { Region } from "@leancloud/play";
 
-export const REGION = Region.NorthChina;
+export const REGION = Region.EastChina;
 
 const appId = process.env.LEANCLOUD_APP_ID || "OgE8zDRpOXNwsl3i38vccFqy-9Nh9j0Va";
 const appKey = process.env.LEANCLOUD_APP_KEY || "TMkbH8yfIO2APRioG2joeety";
