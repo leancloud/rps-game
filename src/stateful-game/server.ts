@@ -2,7 +2,7 @@ import { Game } from "@leancloud/client-engine";
 import { Play, Player, Room } from "@leancloud/play";
 import d = require("debug");
 import produce from "immer";
-import { ActionPayloads, EventPayloads, ActionReducers, EventReducers } from "./core";
+import { ActionPayloads, ActionReducers, EventPayloads, EventReducers } from "./core";
 
 const debug = d("StatefulGame:Server");
 
