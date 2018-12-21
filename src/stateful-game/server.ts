@@ -2,7 +2,7 @@ import { Game } from "@leancloud/client-engine";
 import { Play, Player, Room } from "@leancloud/play";
 import d = require("debug");
 import produce from "immer";
-import { ActionPayloads, EventPayloads, GameActions, GameEvents } from "./core";
+import { ActionPayloads, EventPayloads, ActionReducers, EventReducers } from "./core";
 
 const debug = d("StatefulGame:Server");
 
@@ -14,8 +14,8 @@ export abstract class StatefulGame<
   EP extends EventPayloads<Event>,
 > extends Game {
   protected abstract states: States;
-  protected abstract actions: GameActions<States, Action, AP, Event, EP>;
-  protected abstract events: GameEvents<States, Event, EP>;
+  protected abstract actions: ActionReducers<States, Action, AP, Event, EP>;
+  protected abstract events: EventReducers<States, Event, EP>;
   protected abstract filter: (
     states: States,
     player: Player,
@@ -96,8 +96,8 @@ export const defineGame = <
   },
 }: {
   initialStates: States;
-  actions?: GameActions<States, Action, AP, Event, EP>;
-  events?: GameEvents<States, Event, EP>;
+  actions?: ActionReducers<States, Action, AP, Event, EP>;
+  events?: EventReducers<States, Event, EP>;
   filter?: (states: States, player: Player, playerIndex: number) => States;
 }) => {
   // tslint:disable-next-line:max-classes-per-file

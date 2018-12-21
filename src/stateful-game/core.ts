@@ -18,7 +18,7 @@ export interface IGameActionContext<
   actionSenderIndex: number;
 }
 export type EventPayloads<E extends string | number> = { [name in E]?: any };
-export type GameEvents<
+export type EventReducers<
   S,
   E extends string | number,
   EP extends EventPayloads<E>
@@ -31,7 +31,7 @@ export type GameEvents<
 };
 
 enum Empty {}
-export type GameActions<
+export type ActionReducers<
   S,
   A extends string | number,
   AP extends ActionPayloads<A>,

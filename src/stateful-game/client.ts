@@ -1,7 +1,7 @@
 import { Event, Play, ReceiverGroup } from "@leancloud/play";
 import { EventEmitter } from "events";
 import produce from "immer";
-import { ActionPayloads, GameActions } from "./core";
+import { ActionPayloads, ActionReducers } from "./core";
 
 export class StatefulGame<
   States extends { [key: string]: any },
@@ -11,7 +11,7 @@ export class StatefulGame<
   constructor(
     protected client: Play,
     public states: States,
-    protected actions: GameActions<States, Action, AP>,
+    protected actions: ActionReducers<States, Action, AP>,
   ) {
     super();
     this.client.on(Event.CUSTOM_EVENT, ({ eventId, eventData, senderId}) => {
@@ -80,5 +80,5 @@ export const createGame = <
 }: {
   client: Play,
   initialStates: States;
-  actions?: GameActions<States, Action, AP>;
+  actions?: ActionReducers<States, Action, AP>;
 }) => new StatefulGame(client, initialStates, actions);

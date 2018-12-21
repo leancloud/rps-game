@@ -1,5 +1,5 @@
 import { Player } from "@leancloud/play";
-import { GameActions, GameEvents } from "./stateful-game/core";
+import { ActionReducers, EventReducers } from "./stateful-game/core";
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];
@@ -46,7 +46,7 @@ export const initialStates: IRPSGameStates = {
   started: false,
 };
 
-export const actions: GameActions<IRPSGameStates, Action, IActionPayloads, Event, IEventPayloads> = {
+export const actions: ActionReducers<IRPSGameStates, Action, IActionPayloads, Event, IEventPayloads> = {
   [Action.PLAY](
     states,
     { actionSenderIndex, players, dispatchEvent },
@@ -68,7 +68,7 @@ export const actions: GameActions<IRPSGameStates, Action, IActionPayloads, Event
   },
 };
 
-export const events: GameEvents<IRPSGameStates, Event, IEventPayloads> = {
+export const events: EventReducers<IRPSGameStates, Event, IEventPayloads> = {
   [Event.GAME_START](
     states,
   ) {
