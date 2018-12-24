@@ -6,18 +6,6 @@ const wins = [1, 2, 0];
 
 export const UNKNOWN_CHOICE = -1;
 
-const getWinner = ([player1Choice, player2Choice]: number[], players: Player[])  => {
-  if (player1Choice === player2Choice) {
-    return { draw: true };
-  }
-  return {
-    winnerId: (wins[player1Choice] === player2Choice
-      ? players[0]
-      : players[1]
-    ).userId,
-  };
-};
-
 export interface IRPSGameStates {
   started: boolean;
   choices: Array<number|null>;
@@ -64,8 +52,13 @@ export const actions: ActionReducers<IRPSGameStates, Action, IActionPayloads, Ev
     // 这里的逻辑可能同时在服务端或客户端运行，因此会需要考虑客户端看到的状态是 UNKNOWN_CHOICE 的情况。
     if (choices.indexOf(UNKNOWN_CHOICE) !== -1) { return; }
     // 计算出赢家并更新到结果中
-    states.result = getWinner(choices as number[], players);
+    updateWinner(states, getWinner(choices as number[], players));
   },
+};
+
+const getWinner = ([player1Choice, player2Choice]: number[], players: Player[]) => {
+  if (player1Choice === player2Choice) { return null; }
+  return wins[player1Choice] === player2Choice ? players[0] : players[1];
 };
 
 export const events: EventReducers<IRPSGameStates, Event, IEventPayloads> = {
@@ -76,14 +69,16 @@ export const events: EventReducers<IRPSGameStates, Event, IEventPayloads> = {
   },
   [Event.PLAYER_LEFT](
     states,
-    { game, players, dispatchEvent },
+    { players, dispatchEvent },
   ) {
     if (states.result) { return; }
     // 判定留下的唯一玩家为赢家
-    states.result = {
-      winnerId: game.players[0].userId,
-    };
+    updateWinner(states, players[0]);
   },
+};
+
+const updateWinner = (states: IRPSGameStates, winner: Player | null) => {
+  states.result = winner ? { winnerId: winner.userId } : { draw: true };
 };
 
 export const filter = (
