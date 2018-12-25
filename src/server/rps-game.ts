@@ -1,7 +1,7 @@
 import { autoDestroy, AutomaticGameEvent, listen, watchRoomFull } from "@leancloud/client-engine";
 import { Event as PlayEvent, Play, Room } from "@leancloud/play";
 import d = require("debug");
-import { actions, Event as RPSGameEvent, events, filter, initialStates } from "../rps-game-rules";
+import { Event as RPSGameEvent, events, filter, initialStates } from "../rps-game-rules";
 import { defineGame } from "../stateful-game/server";
 
 const debug = d("RPS");
@@ -12,7 +12,6 @@ const debug = d("RPS");
 @watchRoomFull()
 @autoDestroy()
 export default class RPSGame extends defineGame({
-  actions,
   events,
   filter,
   initialStates,
@@ -36,8 +35,8 @@ export default class RPSGame extends defineGame({
     // 标记房间不再可加入
     this.masterClient.setRoomOpened(false);
     // 向客户端广播游戏开始事件
-    this.dispatchEvent(RPSGameEvent.GAME_START);
+    this.emitEvent(RPSGameEvent.GAME_START);
     // 监听 player 离开游戏事件
-    listen(this.masterClient, PlayEvent.PLAYER_ROOM_LEFT).then(() => this.dispatchEvent(RPSGameEvent.PLAYER_LEFT));
+    listen(this.masterClient, PlayEvent.PLAYER_ROOM_LEFT).then(() => this.emitEvent(RPSGameEvent.PLAYER_LEFT));
   }
 }

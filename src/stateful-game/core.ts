@@ -1,47 +1,52 @@
-import { Game as ClientEngineGame } from "@leancloud/client-engine";
 import { Player } from "@leancloud/play";
 
-interface IGameContext<E extends string | number, EP extends EventPayloads<E>> {
+export enum Env {
+  SERVER = 1,
+  CLIENT = 2,
+}
+
+interface IEventContext<E extends string | number, EP extends EventPayloads<E>> {
   players: Player[];
-  dispatchEvent: <N extends E>(name: N, payload?: EP[N]) => any;
+  emitterIndex?: number;
+  env: Env;
+  emitterEnv: Env;
+  emitEvent: <N extends E>(name: N, payload?: EP[N], options?: {
+    emitterIndex?: number,
+  }) => any;
 }
-interface IGameEventContext<
-  E extends string | number,
-  EP extends EventPayloads<E>
-> extends IGameContext<E, EP> {
-  game: ClientEngineGame;
-}
-export interface IGameActionContext<
-  E extends string | number,
-  EP extends EventPayloads<E>
-> extends IGameContext<E, EP> {
-  actionSenderIndex: number;
-}
-export type EventPayloads<E extends string | number> = { [name in E]?: any };
-export type EventReducers<
-  S,
-  E extends string | number,
-  EP extends EventPayloads<E>
+
+type Handler<Context, Payload> = (
+  states: any,
+  context: Context,
+  payload: Payload,
+) => any;
+
+export type EventPayloads<Command extends string | number> = { [name in Command]?: any };
+export type EventHandlers<
+  Command extends string | number,
+  Payloads extends EventPayloads<Command> = {},
 > = {
-  [name in E]?: (
-    state: S,
-    context: IGameEventContext<E, EP>,
-    payload: EP[name],
-  ) => any
+  [name in Command]?: Handler<IEventContext<Command, Payloads>, Payloads[name]>
 };
 
-enum Empty {}
-export type ActionReducers<
-  S,
-  A extends string | number,
-  AP extends ActionPayloads<A>,
-  E extends string | number = Empty,
-  EP extends EventPayloads<E> = {}
-> = {
-  [name in A]?: (
-    state: S,
-    context: IGameActionContext<E, EP>,
-    payload: AP[name],
-  ) => any
-};
-export type ActionPayloads<A extends string | number> = { [name in A]?: any };
+export function serverOnly<C extends { env: Env }, P>(handler: Handler<C, P>): Handler<C, P> {
+  return (
+    states: any,
+    context: C,
+    payload: P,
+  ) => {
+    if (context.env !== Env.SERVER) { return; }
+    return handler(states, context, payload);
+  };
+}
+
+export function fromServerOnly<C extends { emitterEnv: Env }, P>(handler: Handler<C, P>): Handler<C, P> {
+  return (
+    states: any,
+    context: C,
+    payload: P,
+  ) => {
+    if (context.emitterEnv !== Env.SERVER) { return; }
+    return handler(states, context, payload);
+  };
+}

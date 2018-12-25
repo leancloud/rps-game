@@ -1,5 +1,5 @@
 import { Player } from "@leancloud/play";
-import { ActionReducers, EventReducers } from "./stateful-game/core";
+import { EventHandlers, fromServerOnly } from "./stateful-game/core";
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];
@@ -12,18 +12,13 @@ export interface IRPSGameStates {
   result: null | { winnerId?: string , draw?: boolean};
 }
 
-export enum Action {
-  PLAY,
-}
-declare interface IActionPayloads {
-  [Action.PLAY]: { index: number };
-}
-
 export enum Event {
+  PLAY,
   GAME_START,
   PLAYER_LEFT,
 }
 declare interface IEventPayloads {
+  [Event.PLAY]: { index: number };
   [Event.GAME_START]: void;
   [Event.PLAYER_LEFT]: void;
 }
@@ -34,19 +29,21 @@ export const initialStates: IRPSGameStates = {
   started: false,
 };
 
-export const actions: ActionReducers<IRPSGameStates, Action, IActionPayloads, Event, IEventPayloads> = {
-  [Action.PLAY](
+export const events: EventHandlers<Event, IEventPayloads> = {
+  [Event.PLAY]: (
     states,
-    { actionSenderIndex, players, dispatchEvent },
+    { emitterIndex, players, emitEvent },
     { index },
-  ) {
+  ) => {
     const { started, choices, result } = states;
     if (!started) { return; }
     if (result) { return; }
-    // 如果该玩家已经做出选择，什么都不做
-    if (choices[actionSenderIndex]) { return; }
-    // 更新该玩家的选择
-    choices[actionSenderIndex] = index;
+    if (emitterIndex !== undefined) {
+      // 如果该玩家已经做出选择，什么都不做
+      if (choices[emitterIndex]) { return; }
+      // 更新该玩家的选择
+      choices[emitterIndex] = index;
+    }
     // 如果有人还未选择，继续等待
     if (choices.indexOf(null) !== -1) { return; }
     // 这里的逻辑可能同时在服务端或客户端运行，因此会需要考虑客户端看到的状态是 UNKNOWN_CHOICE 的情况。
@@ -54,27 +51,24 @@ export const actions: ActionReducers<IRPSGameStates, Action, IActionPayloads, Ev
     // 计算出赢家并更新到结果中
     updateWinner(states, getWinner(choices as number[], players));
   },
+  [Event.GAME_START]: fromServerOnly((
+    states,
+  ) => {
+    states.started = true;
+  }),
+  [Event.PLAYER_LEFT]: fromServerOnly((
+    states,
+    { players, emitEvent },
+  ) => {
+    if (states.result) { return; }
+    // 判定留下的唯一玩家为赢家
+    updateWinner(states, players[0]);
+  }),
 };
 
 const getWinner = ([player1Choice, player2Choice]: number[], players: Player[]) => {
   if (player1Choice === player2Choice) { return null; }
   return wins[player1Choice] === player2Choice ? players[0] : players[1];
-};
-
-export const events: EventReducers<IRPSGameStates, Event, IEventPayloads> = {
-  [Event.GAME_START](
-    states,
-  ) {
-    states.started = true;
-  },
-  [Event.PLAYER_LEFT](
-    states,
-    { players, dispatchEvent },
-  ) {
-    if (states.result) { return; }
-    // 判定留下的唯一玩家为赢家
-    updateWinner(states, players[0]);
-  },
 };
 
 const updateWinner = (states: IRPSGameStates, winner: Player | null) => {

@@ -27,19 +27,19 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import {
   play,
-  Event,
+  Event as PlayEvent,
   ReceiverGroup,
   CustomEventData
 } from "@leancloud/play";
 import Player from './Player.vue';
-import { Action, actions, initialStates } from "../../rps-game-rules";
+import { Event, events, initialStates } from "../../rps-game-rules";
 import { createGame } from "../../stateful-game/client";
 import { jsonfyPlayers } from "../utils";
 
 const game = createGame({
   client: play,
   initialStates,
-  actions,
+  events,
 });
 
 @Component({
@@ -72,11 +72,11 @@ export default class Game extends Vue {
 
   mounted() {
     // 加入 Room 并等待玩家加入，等待 masterClient 宣布游戏开始
-    play.on(Event.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
+    play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
       this.players = jsonfyPlayers(game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
     });
-    play.on(Event.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
+    play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
     game.on("states-update", (states) => {
@@ -86,7 +86,7 @@ export default class Game extends Vue {
   }
 
   private choose(index: number) {
-    game.dispatchAction(Action.PLAY, {index});
+    game.emitEvent(Event.PLAY, {index});
   }
 
   private leave() {
