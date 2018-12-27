@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { IRPSGameStates, UNKNOWN_CHOICE } from "../../rps-game-rules";
+import { IRPSGameState, UNKNOWN_CHOICE } from "../../rps-game-rules";
 
 @Component
 export default class Player extends Vue {
@@ -22,7 +22,7 @@ export default class Player extends Vue {
   };
 
   @Prop()
-  result?: IRPSGameStates["result"];
+  result?: IRPSGameState["result"];
 
   unknownChoice = UNKNOWN_CHOICE;
   options = ["✊", "✌️", "✋"];

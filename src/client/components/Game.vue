@@ -1,20 +1,20 @@
 <template>
   <div>
     <div ng-if="opponent.userId">
-      对手<Player :player="opponent" :result="states.result"></Player>
+      对手<Player :player="opponent" :result="state.result"></Player>
     </div>
-    你<Player :player="localPlayer" :result="states.result"></Player>
-    <div v-if="states.result && states.result.draw">平局</div>
-    <div v-if="!states.started">正在等待其他玩家</div>
+    你<Player :player="localPlayer" :result="state.result"></Player>
+    <div v-if="state.result && state.result.draw">平局</div>
+    <div v-if="!state.started">正在等待其他玩家</div>
     <div v-else>
       <div v-show="localPlayer.choice === null">
         请选择：
         <button v-on:click="choose(i)" v-for="(option, i) in options" v-bind:key="i">{{option}}</button>
       </div>
-      <div v-show="states.result"><button v-on:click="leave()">离开房间</button></div>
+      <div v-show="state.result"><button v-on:click="leave()">离开房间</button></div>
     </div>
     <hr>
-    <div>当前状态：{{states}}</div>
+    <div>当前状态：{{state}}</div>
     <hr>
     <details open>
       <summary>日志</summary>
@@ -32,13 +32,13 @@ import {
   CustomEventData
 } from "@leancloud/play";
 import Player from './Player.vue';
-import { Event, events, initialStates } from "../../rps-game-rules";
+import { Event, events, initialState } from "../../rps-game-rules";
 import { createGame } from "../../stateful-game/client";
 import { jsonfyPlayers } from "../utils";
 
 const game = createGame({
   client: play,
-  initialStates,
+  initialState,
   events,
 });
 
@@ -50,14 +50,14 @@ const game = createGame({
 export default class Game extends Vue {
   logs: string[] = [];
   options = ["✊", "✌️", "✋"];
-  states = game.states;
+  state = game.state;
   players = jsonfyPlayers(game.players);
 
   get opponent() {
     const index = this.players.findIndex(player => !player.isLocal && !player.isMaster);
     if (index === -1) return {};
     return {
-      choice: this.states.choices[index],
+      choice: this.state.choices[index],
       userId: this.players[index].userId,
     };
   }
@@ -65,13 +65,12 @@ export default class Game extends Vue {
   get localPlayer() {
     const index = this.players.findIndex(player => player.isLocal);
     return {
-      choice: this.states.choices[index],
+      choice: this.state.choices[index],
       userId: this.players[index].userId,
     };
   }
 
   mounted() {
-    // 加入 Room 并等待玩家加入，等待 masterClient 宣布游戏开始
     play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
       this.players = jsonfyPlayers(game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
@@ -79,9 +78,9 @@ export default class Game extends Vue {
     play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
-    game.on("states-update", (states) => {
-      this.states = states;
-      this.log(`状态变更为: ${JSON.stringify(states)}`, "Game");
+    game.on("state-update", (state) => {
+      this.state = state;
+      this.log(`状态变更为: ${JSON.stringify(state)}`, "Game");
     });
   }
 

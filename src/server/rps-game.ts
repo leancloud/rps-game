@@ -1,7 +1,7 @@
 import { autoDestroy, AutomaticGameEvent, listen, watchRoomFull } from "@leancloud/client-engine";
 import { Event as PlayEvent, Play, Room } from "@leancloud/play";
 import d = require("debug");
-import { Event as RPSGameEvent, events, filter, initialStates } from "../rps-game-rules";
+import { Event as RPSGameEvent, events, filter, initialState } from "../rps-game-rules";
 import { defineGame } from "../stateful-game/server";
 
 const debug = d("RPS");
@@ -14,7 +14,7 @@ const debug = d("RPS");
 export default class RPSGame extends defineGame({
   events,
   filter,
-  initialStates,
+  initialState,
 }) {
   public static defaultSeatCount = 2;
 

@@ -15,38 +15,44 @@ interface IEventContext<E extends string | number, EP extends EventPayloads<E>> 
   }) => any;
 }
 
-type Handler<Context, Payload> = (
-  states: any,
+interface IStateAccessor<State> {
+  getState: () => State;
+  setState: (state: Partial<State>) => void;
+}
+
+type Handler<State, Context, Payload> = (
+  state: IStateAccessor<State>,
   context: Context,
   payload: Payload,
 ) => any;
 
 export type EventPayloads<Command extends string | number> = { [name in Command]?: any };
 export type EventHandlers<
+  State,
   Command extends string | number,
   Payloads extends EventPayloads<Command> = {},
 > = {
-  [name in Command]?: Handler<IEventContext<Command, Payloads>, Payloads[name]>
+  [name in Command]?: Handler<State, IEventContext<Command, Payloads>, Payloads[name]>
 };
 
-export function serverOnly<C extends { env: Env }, P>(handler: Handler<C, P>): Handler<C, P> {
+export function serverOnly<S, C extends { env: Env }, P>(handler: Handler<S, C, P>): Handler<S, C, P> {
   return (
-    states: any,
+    state: IStateAccessor<S>,
     context: C,
     payload: P,
   ) => {
     if (context.env !== Env.SERVER) { return; }
-    return handler(states, context, payload);
+    return handler(state, context, payload);
   };
 }
 
-export function fromServerOnly<C extends { emitterEnv: Env }, P>(handler: Handler<C, P>): Handler<C, P> {
+export function fromServerOnly<S, C extends { emitterEnv: Env }, P>(handler: Handler<S, C, P>): Handler<S, C, P> {
   return (
-    states: any,
+    state: IStateAccessor<S>,
     context: C,
     payload: P,
   ) => {
     if (context.emitterEnv !== Env.SERVER) { return; }
-    return handler(states, context, payload);
+    return handler(state, context, payload);
   };
 }

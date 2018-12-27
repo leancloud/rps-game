@@ -1,23 +1,23 @@
 import { Game } from "@leancloud/client-engine";
 import { Play, Player, Room } from "@leancloud/play";
 import d = require("debug");
-import produce from "immer";
+import { debounce } from "lodash-decorators";
 import { Env, EventHandlers, EventPayloads } from "./core";
 
 const debug = d("StatefulGame:Server");
 
 export abstract class StatefulGame<
-  States extends { [key: string]: any },
+  State extends { [key: string]: any },
   Event extends string | number,
   EP extends EventPayloads<Event>
 > extends Game {
-  protected abstract states: States;
-  protected abstract events: EventHandlers<Event, EP>;
+  protected abstract state: State;
+  protected abstract events: EventHandlers<State, Event, EP>;
   protected abstract filter: (
-    states: States,
+    state: State,
     player: Player,
     playerIndex: number,
-  ) => States;
+  ) => State;
 
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
@@ -27,12 +27,22 @@ export abstract class StatefulGame<
     );
   }
 
-  protected broadcastStates() {
-    debug("states: %o", this.states);
+  protected getState = () => this.state;
+  protected setState = (state: Partial<State>) => {
+    this.state = {
+      ...this.state,
+      ...state,
+    };
+    this.broadcastState();
+  }
+
+  @debounce(0)
+  protected broadcastState() {
+    debug("broadcast state: %o", this.state);
     this.players.map((player) =>
       this.masterClient.sendEvent(
         "_update",
-        this.filter(this.states, player, player.actorId - 2),
+        this.filter(this.state, player, player.actorId - 2),
         {
           targetActorIds: [player.actorId],
         },
@@ -65,32 +75,33 @@ export abstract class StatefulGame<
         env: Env.SERVER,
         players: this.players,
       };
-      this.states = produce(this.states, (draft) =>
-        handler(draft as States, context, payload),
-      );
-      this.broadcastStates();
+      handler({
+        getState: this.getState,
+        setState: this.setState,
+      }, context, payload),
+      this.broadcastState();
     }
   }
 }
 
 export const defineGame = <
-  States extends { [key: string]: any },
+  State extends { [key: string]: any },
   Event extends string | number,
   EP extends EventPayloads<Event>
 >({
-  initialStates,
+  initialState,
   events = {},
-  filter = (states: States) => {
-    return states;
+  filter = (state: State) => {
+    return state;
   },
 }: {
-  initialStates: States;
-  events?: EventHandlers<Event, EP>;
-  filter?: (states: States, player: Player, playerIndex: number) => States;
+  initialState: State;
+  events?: EventHandlers<State, Event, EP>;
+  filter?: (state: State, player: Player, playerIndex: number) => State;
 }) => {
   // tslint:disable-next-line:max-classes-per-file
-  return class extends StatefulGame<States, Event, EP> {
-    protected states = initialStates;
+  return class extends StatefulGame<State, Event, EP> {
+    protected state = initialState;
     protected events = events;
     protected filter = filter;
   };

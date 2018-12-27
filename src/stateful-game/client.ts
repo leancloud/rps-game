@@ -4,14 +4,14 @@ import produce from "immer";
 import { Env, EventHandlers, EventPayloads } from "./core";
 
 export class StatefulGame<
-  States extends { [key: string]: any },
+  State extends { [key: string]: any },
   Event extends string | number,
   EP extends EventPayloads<Event>
 > extends EventEmitter {
   constructor(
     protected client: Play,
-    public states: States,
-    protected events: EventHandlers<Event, EP>,
+    public state: State,
+    protected events: EventHandlers<State, Event, EP>,
   ) {
     super();
     this.client.on(
@@ -21,7 +21,7 @@ export class StatefulGame<
           return;
         }
         if (eventId === "_update") {
-          this.updateStates(eventData as States);
+          this.setState(eventData as State);
         }
       },
     );
@@ -54,11 +54,10 @@ export class StatefulGame<
         env: Env.CLIENT,
         players: this.players,
       };
-      this.updateStates(
-        produce(this.states, (draft) =>
-          handler(draft as States, context, payload),
-        ),
-      );
+      handler({
+        getState: this.getState,
+        setState: this.setState,
+      }, context, payload);
     }
   }
 
@@ -72,22 +71,26 @@ export class StatefulGame<
     );
   }
 
-  private updateStates(states: States) {
-    this.states = states;
-    this.emit("states-update", this.states);
+  private getState = () => this.state;
+  private setState = (state: Partial<State>) => {
+    this.state = {
+      ...this.state,
+      ...state,
+    };
+    this.emit("state-update", this.state);
   }
 }
 
 export const createGame = <
-  States extends { [key: string]: any },
+  State extends { [key: string]: any },
   Event extends string | number,
   EP extends EventPayloads<Event>
 >({
   client,
-  initialStates,
+  initialState,
   events = {},
 }: {
   client: Play;
-  initialStates: States;
-  events?: EventHandlers<Event, EP>;
-}) => new StatefulGame(client, initialStates, events);
+  initialState: State;
+  events?: EventHandlers<State, Event, EP>;
+}) => new StatefulGame(client, initialState, events);
