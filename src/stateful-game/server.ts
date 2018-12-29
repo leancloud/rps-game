@@ -2,7 +2,8 @@ import { Game } from "@leancloud/client-engine";
 import { Play, Player, Room } from "@leancloud/play";
 import d = require("debug");
 import { debounce } from "lodash-decorators";
-import { Env, EventHandlers, EventPayloads } from "./core";
+import { Action as ReduxAction, createStore, Dispatch, Reducer, Store} from "redux";
+import { Env, EventHandlers, EventPayloads, ReduxEventHandlers } from "./core";
 
 const debug = d("StatefulGame:Server");
 
@@ -11,8 +12,11 @@ export abstract class StatefulGame<
   Event extends string | number,
   EP extends EventPayloads<Event>
 > extends Game {
-  protected abstract state: State;
-  protected abstract events: EventHandlers<State, Event, EP>;
+  protected abstract get state(): State;
+
+  protected abstract events: {
+    [name in Event]?: (...args: any) => any;
+  };
   protected abstract filter: (
     state: State,
     player: Player,
@@ -27,14 +31,7 @@ export abstract class StatefulGame<
     );
   }
 
-  protected getState = () => this.state;
-  protected setState = (state: Partial<State>) => {
-    this.state = {
-      ...this.state,
-      ...state,
-    };
-    this.broadcastState();
-  }
+  protected abstract getStateOperators(): any;
 
   @debounce(0)
   protected broadcastState() {
@@ -75,10 +72,7 @@ export abstract class StatefulGame<
         env: Env.SERVER,
         players: this.players,
       };
-      handler({
-        getState: this.getState,
-        setState: this.setState,
-      }, context, payload),
+      handler(this.getStateOperators(), context, payload),
       this.broadcastState();
     }
   }
@@ -104,5 +98,66 @@ export const defineGame = <
     protected state = initialState;
     protected events = events;
     protected filter = filter;
+
+    protected getState = () => this.state;
+    protected setState = (state: Partial<State>) => {
+      this.state = {
+        ...this.state,
+        ...state,
+      };
+      this.broadcastState();
+    }
+
+    protected getStateOperators() {
+      return {
+        emitEvent: this.emitEvent,
+        getState: this.getState,
+        setState: this.setState,
+      };
+    }
+  };
+};
+
+export const defineReduxGame = <
+  State extends { [key: string]: any },
+  Action extends ReduxAction,
+  Event extends string | number,
+  EP extends EventPayloads<Event>
+>({
+  reducer,
+  events = {},
+  filter = (state: State) => {
+    return state;
+  },
+}: {
+  reducer: Reducer<State, Action>,
+  events?: ReduxEventHandlers<State, Event, EP>;
+  filter?: (state: State, player: Player, playerIndex: number) => State;
+}) => {
+  // tslint:disable-next-line:max-classes-per-file
+  return class extends StatefulGame<State, Event, EP> {
+    protected get state() {
+      return this.store.getState();
+    }
+    protected events = events;
+    protected filter = filter;
+
+    protected dispatch: Dispatch<Action>;
+    private store: Store<State, Action>;
+
+    constructor(room: Room, masterClient: Play) {
+      super(room, masterClient);
+      this.store = createStore(reducer);
+      this.store.subscribe(this.broadcastState.bind(this));
+      this.dispatch = this.store.dispatch;
+    }
+    protected getState = () => this.state;
+    protected getStateOperators() {
+      return {
+        dispatch: this.store.dispatch,
+        emitEvent: this.emitEvent,
+        getState: this.getState,
+      };
+    }
   };
 };

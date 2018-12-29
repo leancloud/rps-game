@@ -1,16 +1,14 @@
 import { Player } from "@leancloud/play";
-import { EventHandlers, fromServerOnly } from "./stateful-game/core";
+import { StateType } from "typesafe-actions";
+import { fromServerOnly, ReduxEventHandlers } from "../stateful-game/core";
+import * as actions from "./actions";
+import { UNKNOWN_CHOICE, ValidChoice } from "./models";
+import reducer from "./reducer";
+
+export { UNKNOWN_CHOICE, ValidChoice } from "./models";
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];
-
-export const UNKNOWN_CHOICE = -1;
-
-export interface IRPSGameState {
-  started: boolean;
-  choices: Array<number|null>;
-  result: null | { winnerId?: string , draw?: boolean};
-}
 
 export enum Event {
   PLAY,
@@ -18,21 +16,21 @@ export enum Event {
   PLAYER_LEFT,
 }
 declare interface IEventPayloads {
-  [Event.PLAY]: { index: number };
+  [Event.PLAY]: { index: ValidChoice };
   [Event.GAME_START]: void;
   [Event.PLAYER_LEFT]: void;
 }
 
-export const initialState: IRPSGameState = {
-  choices: [null, null],
-  result: null,
-  started: false,
-};
+export {
+  reducer,
+  actions,
+ };
+export type RPSGameState = StateType<typeof reducer>;
 
-export const events: EventHandlers<IRPSGameState, Event, IEventPayloads> = {
+export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads> = {
   [Event.PLAY]: (
-    { getState, setState },
-    { emitterIndex, players, emitEvent },
+    { dispatch, getState, emitEvent },
+    { emitterIndex, players },
     { index },
   ) => {
     const { started, choices, result } = getState();
@@ -42,26 +40,24 @@ export const events: EventHandlers<IRPSGameState, Event, IEventPayloads> = {
       // 如果该玩家已经做出选择，什么都不做
       if (choices[emitterIndex]) { return; }
       // 更新该玩家的选择
-      choices[emitterIndex] = index;
-      setState({ choices });
+      dispatch(actions.setChoice(index, emitterIndex));
     }
+    // State is immutable. we must get a new one.
+    const { choices: newChoices } = getState();
     // 如果有人还未选择，继续等待
-    if (choices.indexOf(null) !== -1) { return; }
+    if (newChoices.indexOf(null) !== -1) { return; }
     // 这里的逻辑可能同时在服务端或客户端运行，因此会需要考虑客户端看到的状态是 UNKNOWN_CHOICE 的情况。
-    if (choices.indexOf(UNKNOWN_CHOICE) !== -1) { return; }
+    if (newChoices.indexOf(UNKNOWN_CHOICE) !== -1) { return; }
     // 计算出赢家并更新到结果中
-    setState({ result: getResult(getWinner(choices as number[], players)) });
+    dispatch(actions.setWinner(getWinner(newChoices as number[], players)));
   },
-  [Event.GAME_START]: fromServerOnly((
-    { setState },
-  ) => setState({ started: true })),
   [Event.PLAYER_LEFT]: fromServerOnly((
-    { getState, setState },
-    { players, emitEvent },
+    { dispatch, getState, emitEvent },
+    { players },
   ) => {
     if (getState().result) { return; }
     // 判定留下的唯一玩家为赢家
-    setState({ result: getResult(players[0]) });
+    dispatch(actions.setWinner(players[0]));
   }),
 };
 
@@ -70,10 +66,8 @@ const getWinner = ([player1Choice, player2Choice]: number[], players: Player[]) 
   return wins[player1Choice] === player2Choice ? players[0] : players[1];
 };
 
-const getResult = (winner: Player | null) => winner ? { winnerId: winner.userId } : { draw: true };
-
 export const filter = (
-  state: IRPSGameState,
+  state: RPSGameState,
   player: Player,
   playerIndex: number,
 ) => {

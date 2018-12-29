@@ -32,14 +32,14 @@ import {
   CustomEventData
 } from "@leancloud/play";
 import Player from './Player.vue';
-import { Event, events, initialState } from "../../rps-game-rules";
-import { createGame } from "../../stateful-game/client";
+import { Event, events, reducer, ValidChoice } from "../../rps-game-rules";
+import { createReduxGame } from "../../stateful-game/client";
 import { jsonfyPlayers } from "../utils";
 
-const game = createGame({
+const game = createReduxGame({
   client: play,
-  initialState,
   events,
+  reducer,
 });
 
 @Component({
@@ -84,7 +84,7 @@ export default class Game extends Vue {
     });
   }
 
-  private choose(index: number) {
+  private choose(index: ValidChoice) {
     game.emitEvent(Event.PLAY, {index});
   }
 
