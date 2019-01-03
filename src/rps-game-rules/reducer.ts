@@ -1,4 +1,3 @@
-import produce from "immer";
 import { combineReducers } from "redux";
 import { ActionType, getType } from "typesafe-actions";
 import * as game from "./actions";
@@ -7,18 +6,35 @@ import { Choice, Result } from "./models";
 type RPSGameAction = ActionType<typeof game>;
 
 export default combineReducers({
-  choices: (state: Choice[] = [null, null], action: RPSGameAction) => produce(state, (draft) => {
+  choices: (
+    state: {
+      [playerId: string]: Choice;
+    } = {},
+    action: RPSGameAction,
+  ) => {
     switch (action.type) {
-      case getType(game.setChoice):
-        const { choice, index } = action.payload;
-        draft[index] = choice;
+      case getType(game.start): {
+        return action.payload.reduce((prev, player) => ({
+          ...prev,
+          [player.userId]: null,
+        }), {});
       }
-  }),
+      case getType(game.setChoice): {
+        const { choice, player } = action.payload;
+        return {
+          ...state,
+          [player.userId]: choice,
+        };
+      }
+      default:
+        return state;
+    }
+  },
   result: (state: Result | null = null, action: RPSGameAction) => {
     switch (action.type) {
       case getType(game.setWinner):
-        const winner = action.payload;
-        return winner ? { winnerId: winner.userId } : { draw: true };
+        const winnerId = action.payload;
+        return winnerId ? { winnerId } : { draw: true };
       default:
        return state;
     }

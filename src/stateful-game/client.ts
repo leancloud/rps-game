@@ -20,13 +20,6 @@ abstract class StatefulGameBase<
     );
   }
 
-  public get clientIndex() {
-    if (!this.client.player) {
-      return -1;
-    }
-    return this.client.player.actorId - 2;
-  }
-
   protected abstract events: {
     [name in Event]?: (...args: any) => any;
   };
@@ -54,7 +47,7 @@ abstract class StatefulGameBase<
     if (handler) {
       const context = {
         emitterEnv: Env.CLIENT,
-        emitterIndex: this.clientIndex,
+        emitterId: this.client.player.actorId,
         env: Env.CLIENT,
         players: this.players,
       };

@@ -1,4 +1,5 @@
 import { Player } from "@leancloud/play";
+import { mapValues } from "lodash";
 import { StateType } from "typesafe-actions";
 import { fromServerOnly, ReduxEventHandlers } from "../stateful-game/core";
 import * as actions from "./actions";
@@ -27,57 +28,66 @@ export {
  };
 export type RPSGameState = StateType<typeof reducer>;
 
+interface IValidChoiceMaop { [playerId: string]: ValidChoice; }
+
 export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads> = {
   [Event.PLAY]: (
     { dispatch, getState, emitEvent },
-    { emitterIndex, players },
+    { emitter, players },
     { index },
   ) => {
     const { started, choices, result } = getState();
     if (!started) { return; }
     if (result) { return; }
-    if (emitterIndex !== undefined) {
+    if (emitter !== undefined) {
       // 如果该玩家已经做出选择，什么都不做
-      if (choices[emitterIndex]) { return; }
+      if (choices[emitter.userId] !== null) { return; }
       // 更新该玩家的选择
-      dispatch(actions.setChoice(index, emitterIndex));
+      dispatch(actions.setChoice(index, emitter));
     }
     // State is immutable. we must get a new one.
     const { choices: newChoices } = getState();
+    const choiceList = Object.values(newChoices);
     // 如果有人还未选择，继续等待
-    if (newChoices.indexOf(null) !== -1) { return; }
+    if (choiceList.indexOf(null) !== -1) { return; }
     // 这里的逻辑可能同时在服务端或客户端运行，因此会需要考虑客户端看到的状态是 UNKNOWN_CHOICE 的情况。
-    if (newChoices.indexOf(UNKNOWN_CHOICE) !== -1) { return; }
+    if (choiceList.indexOf(UNKNOWN_CHOICE) !== -1) { return; }
     // 计算出赢家并更新到结果中
-    dispatch(actions.setWinner(getWinner(newChoices as number[], players)));
+    dispatch(actions.setWinner(getWinner(newChoices as IValidChoiceMaop)));
   },
+  [Event.GAME_START]: fromServerOnly((
+    { dispatch },
+    { players },
+  ) => {
+    dispatch(actions.start(players));
+  }),
   [Event.PLAYER_LEFT]: fromServerOnly((
     { dispatch, getState, emitEvent },
     { players },
   ) => {
     if (getState().result) { return; }
     // 判定留下的唯一玩家为赢家
-    dispatch(actions.setWinner(players[0]));
+    dispatch(actions.setWinner(players[0].userId));
   }),
 };
 
-const getWinner = ([player1Choice, player2Choice]: number[], players: Player[]) => {
+const getWinner = (choices: IValidChoiceMaop) => {
+  const [[player1Id, player1Choice], [player2Id, player2Choice]] = Object.entries(choices);
   if (player1Choice === player2Choice) { return null; }
-  return wins[player1Choice] === player2Choice ? players[0] : players[1];
+  return wins[player1Choice] === player2Choice ? player1Id : player2Id;
 };
 
 export const filter = (
   state: RPSGameState,
   player: Player,
-  playerIndex: number,
 ) => {
   if (state.result) {
     return state;
   }
   return {
     ...state,
-    choices: state.choices.map((choice, index) => {
-      if (index === playerIndex) {
+    choices: mapValues(state.choices, (choice, playerId) => {
+      if (playerId === player.userId) {
         return choice;
       }
       if (choice === null) {

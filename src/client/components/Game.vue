@@ -1,13 +1,13 @@
 <template>
   <div>
-    <div ng-if="opponent.userId">
+    <div v-if="opponent">
       对手<Player :player="opponent" :result="state.result"></Player>
     </div>
     你<Player :player="localPlayer" :result="state.result"></Player>
     <div v-if="state.result && state.result.draw">平局</div>
     <div v-if="!state.started">正在等待其他玩家</div>
     <div v-else>
-      <div v-show="localPlayer.choice === null">
+      <div v-show="!state.result && localPlayer.choice === null">
         请选择：
         <button v-on:click="choose(i)" v-for="(option, i) in options" v-bind:key="i">{{option}}</button>
       </div>
@@ -32,15 +32,9 @@ import {
   CustomEventData
 } from "@leancloud/play";
 import Player from './Player.vue';
-import { Event, events, reducer, ValidChoice } from "../../rps-game-rules";
-import { createReduxGame } from "../../stateful-game/client";
+import { Event, events, reducer, ValidChoice, RPSGameState } from "../../rps-game-rules";
+import { createReduxGame, ReduxGame } from "../../stateful-game/client";
 import { jsonfyPlayers } from "../utils";
-
-const game = createReduxGame({
-  client: play,
-  events,
-  reducer,
-});
 
 @Component({
   components: {
@@ -48,44 +42,51 @@ const game = createReduxGame({
   }
 })
 export default class Game extends Vue {
+  private game = createReduxGame({
+    client: play,
+    events,
+    reducer,
+  });
+
   logs: string[] = [];
   options = ["✊", "✌️", "✋"];
-  state = game.state;
-  players = jsonfyPlayers(game.players);
+  state = this.game.state;
+  players = jsonfyPlayers(this.game.players);
 
   get opponent() {
-    const index = this.players.findIndex(player => !player.isLocal && !player.isMaster);
-    if (index === -1) return {};
+    const player = this.players.find(player => !player.isLocal && !player.isMaster);
+    if (!player) return;
     return {
-      choice: this.state.choices[index],
-      userId: this.players[index].userId,
+      choice: this.state.choices[player.userId],
+      userId: player.userId,
     };
   }
 
   get localPlayer() {
-    const index = this.players.findIndex(player => player.isLocal);
+    const player = this.players.find(player => player.isLocal);
+    if (!player) return;
     return {
-      choice: this.state.choices[index],
-      userId: this.players[index].userId,
+      choice: this.state.choices[player.userId],
+      userId: player.userId,
     };
   }
 
-  mounted() {
+  created() {
     play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
-      this.players = jsonfyPlayers(game.players);
+      this.players = jsonfyPlayers(this.game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
     });
     play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
-    game.on("state-update", (state) => {
+    this.game.on("state-update", (state) => {
       this.state = state;
       this.log(`状态变更为: ${JSON.stringify(state)}`, "Game");
     });
   }
 
   private choose(index: ValidChoice) {
-    game.emitEvent(Event.PLAY, {index});
+    this.game.emitEvent(Event.PLAY, {index});
   }
 
   private leave() {

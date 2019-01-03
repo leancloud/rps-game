@@ -20,14 +20,13 @@ export abstract class StatefulGame<
   protected abstract filter: (
     state: State,
     player: Player,
-    playerIndex: number,
   ) => State;
 
   constructor(room: Room, masterClient: Play) {
     super(room, masterClient);
     this.getStream("_event").subscribe(
-      ({ eventData: { name, payload }, senderId }) =>
-        this.internalEmitEvent(name, payload, Env.CLIENT, senderId - 2),
+      ({ eventData: { name, payload }, senderId}) =>
+        this.internalEmitEvent(name, payload, Env.CLIENT, room.getPlayer(senderId)),
     );
   }
 
@@ -39,7 +38,7 @@ export abstract class StatefulGame<
     this.players.map((player) =>
       this.masterClient.sendEvent(
         "_update",
-        this.filter(this.state, player, player.actorId - 2),
+        this.filter(this.state, player),
         {
           targetActorIds: [player.actorId],
         },
@@ -47,11 +46,11 @@ export abstract class StatefulGame<
     );
   }
 
-  private bindEmitEvent = (defaultEmitterIndex?: number) => <N extends Event>(
+  private bindEmitEvent = (defaultEmitter?: Player) => <N extends Event>(
     name: N,
     payload?: EP[N],
-    { emitterIndex = defaultEmitterIndex } = {},
-  ) => this.internalEmitEvent(name, payload, Env.SERVER, emitterIndex)
+    { emitter = defaultEmitter } = {},
+  ) => this.internalEmitEvent(name, payload, Env.SERVER, emitter)
 
   // tslint:disable-next-line:member-ordering
   protected emitEvent = this.bindEmitEvent();
@@ -60,15 +59,15 @@ export abstract class StatefulGame<
     name: N,
     payload?: EP[N],
     emitterEnv = Env.CLIENT,
-    emitterIndex?: number,
+    emitter?: Player,
   ) {
-    debug("event: %o", { name, emitterIndex, payload });
+    debug("event: %o", { name, payload, emitterId: emitter ? emitter.userId : undefined });
     const handler = this.events[name];
     if (handler) {
       const context = {
-        emitEvent: this.bindEmitEvent(emitterIndex),
+        emitEvent: this.bindEmitEvent(emitter),
+        emitter,
         emitterEnv,
-        emitterIndex,
         env: Env.SERVER,
         players: this.players,
       };
@@ -91,7 +90,7 @@ export const defineGame = <
 }: {
   initialState: State;
   events?: EventHandlers<State, Event, EP>;
-  filter?: (state: State, player: Player, playerIndex: number) => State;
+  filter?: (state: State, player: Player) => State;
 }) => {
   // tslint:disable-next-line:max-classes-per-file
   return class extends StatefulGame<State, Event, EP> {
@@ -132,7 +131,7 @@ export const defineReduxGame = <
 }: {
   reducer: Reducer<State, Action>,
   events?: ReduxEventHandlers<State, Event, EP>;
-  filter?: (state: State, player: Player, playerIndex: number) => State;
+  filter?: (state: State, player: Player) => State;
 }) => {
   // tslint:disable-next-line:max-classes-per-file
   return class extends StatefulGame<State, Event, EP> {

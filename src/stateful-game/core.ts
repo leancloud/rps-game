@@ -8,7 +8,7 @@ export enum Env {
 
 interface IEventContext {
   players: Player[];
-  emitterIndex?: number;
+  emitter?: Player;
   env: Env;
   emitterEnv: Env;
 }
@@ -25,7 +25,7 @@ interface IStateOperator<State, E extends string | number, EP extends EventPaylo
   getState: () => State;
   setState: (state: Partial<State>) => void;
   emitEvent: <N extends E>(name: N, payload?: EP[N], options?: {
-    emitterIndex?: number,
+    emitter?: Player,
   }) => any;
 }
 
@@ -41,7 +41,7 @@ interface IReduxStateOperator<State, E extends string | number, EP extends Event
   getState: () => State;
   dispatch: Store["dispatch"];
   emitEvent: <N extends E>(name: N, payload?: EP[N], options?: {
-    emitterIndex?: number,
+    emitter?: Player,
   }) => any;
 }
 
