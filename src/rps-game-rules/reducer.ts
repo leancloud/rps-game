@@ -1,5 +1,5 @@
-import { combineReducers } from "redux";
-import { ActionType, getType } from "typesafe-actions";
+import { ActionType, getType } from "@leancloud/stateful-game/action";
+import { combineReducers } from "@leancloud/stateful-game/redux";
 import * as game from "./actions";
 import { Choice, Result } from "./models";
 

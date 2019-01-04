@@ -1,8 +1,8 @@
 import { autoDestroy, AutomaticGameEvent, listen, watchRoomFull } from "@leancloud/client-engine";
 import { Event as PlayEvent, Play, Room } from "@leancloud/play";
+import { defineReduxGame } from "@leancloud/stateful-game/server";
 import d = require("debug");
 import { Event as RPSGameEvent, events, filter, reducer } from "../rps-game-rules";
-import { defineReduxGame } from "../stateful-game/server";
 
 const debug = d("RPS");
 

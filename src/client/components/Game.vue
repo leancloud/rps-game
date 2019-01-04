@@ -31,9 +31,9 @@ import {
   ReceiverGroup,
   CustomEventData
 } from "@leancloud/play";
+import { createReduxGame, Event as ClientEvent } from "@leancloud/stateful-game/client";
 import Player from './Player.vue';
 import { Event, events, reducer, ValidChoice, RPSGameState } from "../../rps-game-rules";
-import { createReduxGame, ReduxGame } from "../../stateful-game/client";
 import { jsonfyPlayers } from "../utils";
 
 @Component({
@@ -79,7 +79,7 @@ export default class Game extends Vue {
     play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
-    this.game.on("state-update", (state) => {
+    this.game.on(ClientEvent.STATE_UPDATE, (state) => {
       this.state = state;
       this.log(`状态变更为: ${JSON.stringify(state)}`, "Game");
     });
