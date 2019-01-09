@@ -31,7 +31,7 @@ import {
   ReceiverGroup,
   CustomEventData
 } from "@leancloud/play";
-import { createReduxGame, Event as ClientEvent } from "@leancloud/stateful-game/client";
+import { createReduxGameClient, ClientEvent } from "@leancloud/stateful-game/client";
 import Player from './Player.vue';
 import { Event, events, reducer, ValidChoice, RPSGameState } from "../../rps-game-rules";
 import { jsonfyPlayers } from "../utils";
@@ -42,7 +42,7 @@ import { jsonfyPlayers } from "../utils";
   }
 })
 export default class Game extends Vue {
-  private game = createReduxGame({
+  private game = createReduxGameClient({
     client: play,
     events,
     reducer,

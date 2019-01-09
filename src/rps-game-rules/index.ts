@@ -1,6 +1,6 @@
 import { Player } from "@leancloud/play";
 import { fromServerOnly, ReduxEventHandlers } from "@leancloud/stateful-game";
-import { StateType } from "@leancloud/stateful-game/action";
+import { ActionType, StateType } from "@leancloud/stateful-game/action";
 import { mapValues } from "lodash";
 import * as actions from "./actions";
 import { UNKNOWN_CHOICE, ValidChoice } from "./models";
@@ -27,10 +27,11 @@ export {
   actions,
  };
 export type RPSGameState = StateType<typeof reducer>;
+export type RPSGameAction = ActionType<typeof actions>;
 
 interface IValidChoiceMaop { [playerId: string]: ValidChoice; }
 
-export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads> = {
+export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads, RPSGameAction> = {
   [Event.PLAY]: (
     { dispatch, getState, emitEvent },
     { emitter, players },
