@@ -55,4 +55,8 @@ button,
 input {
   font-size: 32px;
 }
+details,
+details input {
+  font-size: 60%;
+}
 </style>

@@ -99,10 +99,3 @@ export default class Game extends Vue {
   }
 }
 </script>
-
-<style>
-details,
-details input {
-  font-size: 60%;
-}
-</style>
