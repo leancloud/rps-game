@@ -9,9 +9,9 @@ import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
 import os = require("os");
+import PRSGameRedux from "../games/rps-game-redux/server";
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
 import Reception from "./reception";
-import PRSGame from "./rps-game";
 
 const apiRouter = express.Router();
 
@@ -19,7 +19,7 @@ apiRouter.use(bodyParser.json());
 apiRouter.use(cors());
 
 const reception = new Reception(
-  PRSGame,
+  PRSGameRedux,
   APP_ID,
   APP_KEY,
   {

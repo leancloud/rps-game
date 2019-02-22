@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { RPSGameState, UNKNOWN_CHOICE } from "../../rps-game-rules";
+import { RPSGameState, UNKNOWN_CHOICE } from "./rules";
 
 @Component
 export default class Player extends Vue {

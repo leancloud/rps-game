@@ -34,8 +34,7 @@ interface IValidChoiceMaop { [playerId: string]: ValidChoice; }
 export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads, RPSGameAction> = {
   [Event.PLAY]: (
     { dispatch, getState, emitEvent },
-    { emitter, players },
-    { index },
+    { index, emitter, players },
   ) => {
     const { started, choices, result } = getState();
     if (!started) { return; }

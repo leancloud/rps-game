@@ -3,7 +3,7 @@
     <h2>Client Engine Demo</h2>
     <Login v-if="status == 'LOGIN'"></Login>
     <Lobby v-if="status == 'LOBBY'"></Lobby>
-    <Game v-if="status == 'GAME'"></Game>
+    <GameRedux v-if="status == 'GAME'"></GameRedux>
   </div>
 </template>
 
@@ -12,14 +12,14 @@ import { Component, Vue } from "vue-property-decorator";
 import { play, Event } from "@leancloud/play";
 import Login from "./components/Login.vue";
 import Lobby from "./components/Lobby.vue";
-import Game from "./components/Game.vue";
+import GameRedux from "../games/rps-game-redux/Client.vue";
 import { errorHandler } from "./utils";
 
 @Component({
   components: {
     Login,
     Lobby,
-    Game
+    GameRedux,
   }
 })
 export default class App extends Vue {

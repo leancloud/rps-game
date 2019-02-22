@@ -33,8 +33,8 @@ import {
 } from "@leancloud/play";
 import { createReduxGameClient, ClientEvent } from "@leancloud/stateful-game/client";
 import Player from './Player.vue';
-import { Event, events, reducer, ValidChoice, RPSGameState } from "../../rps-game-rules";
-import { jsonfyPlayers } from "../utils";
+import { Event, events, reducer, ValidChoice, RPSGameState } from "./rules";
+import { jsonfyPlayers } from "../../client/utils";
 
 @Component({
   components: {
