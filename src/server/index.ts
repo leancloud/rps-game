@@ -1,4 +1,6 @@
 import {
+  Game,
+  GameManager,
   ICreateGameOptions,
   LoadBalancerFactory,
 } from "@leancloud/client-engine";
@@ -8,8 +10,11 @@ import cors = require("cors");
 import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
+import _ = require("lodash");
 import os = require("os");
 import PRSGameRedux from "../games/rps-game-redux/server";
+import { GameMode } from "../games/types";
+// import PRSGameXstate from "../games/rps-game-xstate/server";
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
 import Reception from "./reception";
 
@@ -18,47 +23,55 @@ const apiRouter = express.Router();
 apiRouter.use(bodyParser.json());
 apiRouter.use(cors());
 
-const reception = new Reception(
-  PRSGameRedux,
-  APP_ID,
-  APP_KEY,
-  {
-    concurrency: 2,
-    // 如果要使用其他节点，暂时需要手动指定，该参数会在今后移除。
-    // 需要先 import { Region } from "@leancloud/play";
-    region: Region.EastChina,
-  },
-);
-
 const loadBalancerFactory = new LoadBalancerFactory({
-  poolId: `${APP_ID.slice(0, 5)}-${process.env.LEANCLOUD_APP_ENV || "development"}`,
+  poolId: `${APP_ID.slice(0, 5)}-${process.env.LEANCLOUD_APP_ENV ||
+    "development"}`,
   redisUrl: process.env.REDIS_URL__CLIENT_ENGINE,
 });
 
-const loadBalancer = loadBalancerFactory
-  .bind(reception, ["makeReservation", "createGameAndGetName"])
-  .on("online", () => console.log("Load balancer online")).on("offline", () => {
-    console.warn(
-`The load balancer can not connect to Redis server. Client Engine will keep running in standalone mode.
-It's probably fine if you are running it locally without a Redis server. Otherwise, check project configs.`,
-    );
+type GameConstructor<T extends Game> = GameManager<T>["gameClass"];
+
+const createReception = <T extends Game>(game: GameConstructor<T>) => {
+  const reception = new Reception(game, APP_ID, APP_KEY, {
+    concurrency: 2,
+    region: Region.EastChina,
   });
+
+  const loadBalancer = loadBalancerFactory
+    .bind(reception, ["makeReservation", "createGameAndGetName"])
+    .on("online", () => console.log("Load balancer online"))
+    .on("offline", () => {
+      console.warn(
+        `The load balancer can not connect to Redis server. Client Engine will keep running in standalone mode.
+  It's probably fine if you are running it locally without a Redis server. Otherwise, check project configs.`,
+      );
+    });
+
+  return {
+    loadBalancer,
+    reception,
+  };
+};
+
+const games = _({
+  [GameMode.Redux]: PRSGameRedux,
+  // https://stackoverflow.com/questions/44467778/typescript-with-lodash-map123-234-trim-returns-boolean
+}).mapValues((game) => createReception(game)).value();
 
 const debug = d("ClientEngine");
 
 // TODO: 这个接口需要鉴权与流控
 apiRouter.post("/reservation", async (req, res, next) => {
   try {
-    const {
-      playerId,
-    } = req.body as {
+    const { mode, playerId } = req.body as {
+      mode: GameMode;
       playerId: any;
     };
     if (typeof playerId !== "string") {
       throw new Error("Missing playerId");
     }
     debug(`Making reservation for player[${playerId}]`);
-    const roomName = await reception.makeReservation(playerId);
+    const roomName = await games[mode].reception.makeReservation(playerId);
     debug(`Seat reserved, room: ${roomName}`);
     return res.json({
       roomName,
@@ -70,10 +83,8 @@ apiRouter.post("/reservation", async (req, res, next) => {
 
 apiRouter.post("/game", async (req, res, next) => {
   try {
-    const {
-      playerId,
-      options,
-    } = req.body as {
+    const { mode, playerId, options } = req.body as {
+      mode: GameMode,
       playerId: any;
       options: ICreateGameOptions;
     };
@@ -81,7 +92,7 @@ apiRouter.post("/game", async (req, res, next) => {
       throw new Error("Missing playerId");
     }
     debug(`Creating a new game for player[${playerId}]`);
-    const roomName = await reception.createGameAndGetName(playerId, options);
+    const roomName = await games[mode].reception.createGameAndGetName(playerId, options);
     debug(`Game created, room: ${roomName}`);
     return res.json({
       roomName,
@@ -91,19 +102,24 @@ apiRouter.post("/game", async (req, res, next) => {
   }
 });
 
-apiRouter.use("/admin", basicAuth({
-  challenge: true,
-  realm: APP_ID,
-  users: { admin: MASTER_KEY },
-}));
+apiRouter.use(
+  "/admin",
+  basicAuth({
+    challenge: true,
+    realm: APP_ID,
+    users: { admin: MASTER_KEY },
+  }),
+);
 
 apiRouter.get("/admin/status", async (req, res, next) => {
   try {
     res.json({
-      loadBalancer: await loadBalancer.getStatus(),
+      games: await Promise.all(_.map(games, async (game) => ({
+        loadBalancer: await game.loadBalancer.getStatus(),
+        reception: await game.reception.getStatus(),
+      }))),
       memoryUsage: process.memoryUsage(),
       osLoadavg: os.loadavg(),
-      reception: await reception.getStatus(),
     });
   } catch (error) {
     next(error);
@@ -114,7 +130,7 @@ apiRouter.get("/admin/status", async (req, res, next) => {
 process.on("SIGTERM", async () => {
   debug("SIGTERM recieved. Closing the LB.");
   try {
-    await loadBalancer.close();
+    await Promise.all(_.map(games, (game) => game.loadBalancer.close()));
     debug("Shutting down.");
     setTimeout(() => {
       process.exit(0);
