@@ -2,7 +2,7 @@
   <div>
     <label for="mode">Mode:</label>
     <select name="mode" v-bind:mode="mode" v-on:change="$emit('update:mode', $event.target.value)" size="3">
-      <option v-for="m in modes" v-bind:key="m">{{m}}</option>
+      <option v-for="m in modes" v-bind:key="m" v-bind:selected="m === mode">{{m}}</option>
     </select>
     <button v-on:click="match">快速开始</button>
     <button v-on:click="create">创建新游戏</button>
@@ -15,7 +15,6 @@ import { play, Event } from "@leancloud/play";
 import { configs } from "../configs";
 import { listen } from "../utils";
 import { GameMode } from "../../games/types";
-
 
 @Component
 export default class Lobby extends Vue {

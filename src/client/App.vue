@@ -6,6 +6,7 @@
     <template v-if="status == 'GAME'">
       <div class="mode">Mode: {{mode}}</div>
       <GameRedux v-if="mode == modes.Redux"></GameRedux>
+      <GameXstate v-if="mode == modes.Xstate"></GameXstate>
     </template>
   </div>
 </template>
@@ -17,6 +18,7 @@ import Login from "./components/Login.vue";
 import Lobby from "./components/Lobby.vue";
 import { GameMode } from "../games/types";
 import GameRedux from "../games/rps-game-redux/Client.vue";
+import GameXstate from "../games/rps-game-xstate/Client.vue";
 import { errorHandler } from "./utils";
 
 @Component({
@@ -24,6 +26,7 @@ import { errorHandler } from "./utils";
     Login,
     Lobby,
     GameRedux,
+    GameXstate,
   }
 })
 export default class App extends Vue {

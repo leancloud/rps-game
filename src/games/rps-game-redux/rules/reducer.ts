@@ -1,7 +1,7 @@
 import { ActionType, getType } from "@leancloud/stateful-game/action";
 import { combineReducers } from "@leancloud/stateful-game/redux";
+import { Choice, Result } from "../../models";
 import * as game from "./actions";
-import { Choice, Result } from "./models";
 
 type RPSGameAction = ActionType<typeof game>;
 

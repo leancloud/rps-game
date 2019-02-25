@@ -1,6 +1,6 @@
 import { Player } from "@leancloud/play";
 import { createAction } from "@leancloud/stateful-game/action";
-import { ValidChoice } from "./models";
+import { ValidChoice } from "../../models";
 
 export const start = createAction(
   "START",

@@ -2,11 +2,11 @@ import { Player } from "@leancloud/play";
 import { fromServerOnly, ReduxEventHandlers } from "@leancloud/stateful-game";
 import { ActionType, StateType } from "@leancloud/stateful-game/action";
 import { mapValues } from "lodash";
+import { UNKNOWN_CHOICE, ValidChoice } from "../../models";
 import * as actions from "./actions";
-import { UNKNOWN_CHOICE, ValidChoice } from "./models";
 import reducer from "./reducer";
 
-export { UNKNOWN_CHOICE, ValidChoice } from "./models";
+export { UNKNOWN_CHOICE, ValidChoice } from "../../models";
 
 // [✊, ✌️, ✋] wins [✌️, ✋, ✊]
 const wins = [1, 2, 0];

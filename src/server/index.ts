@@ -13,8 +13,8 @@ import basicAuth = require("express-basic-auth");
 import _ = require("lodash");
 import os = require("os");
 import PRSGameRedux from "../games/rps-game-redux/server";
+import PRSGameXstate from "../games/rps-game-xstate/server";
 import { GameMode } from "../games/types";
-// import PRSGameXstate from "../games/rps-game-xstate/server";
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
 import Reception from "./reception";
 
@@ -53,10 +53,10 @@ const createReception = <T extends Game>(game: GameConstructor<T>) => {
   };
 };
 
-const games = _({
-  [GameMode.Redux]: PRSGameRedux,
-  // https://stackoverflow.com/questions/44467778/typescript-with-lodash-map123-234-trim-returns-boolean
-}).mapValues((game) => createReception(game)).value();
+const games = {
+  [GameMode.Redux]: createReception(PRSGameRedux),
+  [GameMode.Xstate]: createReception(PRSGameXstate),
+};
 
 const debug = d("ClientEngine");
 

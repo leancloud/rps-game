@@ -1,17 +1,20 @@
 <template>
   <div>
     <div v-if="opponent">
-      对手<Player :player="opponent" :result="state.result"></Player>
+      对手<Player :player="opponent" :result="state.context.result"></Player>
     </div>
-    你<Player :player="localPlayer" :result="state.result"></Player>
-    <div v-if="state.result && state.result.draw">平局</div>
-    <div v-if="!state.started">正在等待其他玩家</div>
-    <div v-else>
-      <div v-show="!state.result && localPlayer.choice === null">
+    你<Player :player="localPlayer" :result="state.context.result"></Player>
+    <div v-if="state.value === 'waiting'">正在等待其他玩家</div>
+    <div v-else-if="state.value.started">
+      <div v-show="localPlayer.choice === null">
         请选择：
         <button v-on:click="choose(i)" v-for="(option, i) in options" v-bind:key="i">{{option}}</button>
       </div>
-      <div v-show="state.result"><button v-on:click="leave()">离开房间</button></div>
+    </div>
+    <!-- state.value === 'end' -->
+    <div v-else>
+      <div v-if="state.context.result && state.context.result.draw">平局</div>
+      <button v-on:click="leave()">离开房间</button>
     </div>
     <hr>
     <div>当前状态：{{state}}</div>
@@ -31,10 +34,35 @@ import {
   ReceiverGroup,
   CustomEventData
 } from "@leancloud/play";
-import { createReduxGameClient, ClientEvent } from "@leancloud/stateful-game/client";
+import { RPSGameState, PRSGameEvent, initialState, Event, IEventPayloads } from './rules';
+import { EventHandlers } from "@leancloud/stateful-game";
+import { createGameClient, ClientEvent } from "@leancloud/stateful-game/client";
 import Player from '../Player.vue';
-import { Event, events, reducer, ValidChoice, RPSGameState } from "./rules";
 import { jsonfyPlayers } from "../../client/utils";
+import { ValidChoice } from "../models";
+
+// 客户端事件处理逻辑
+// 这是为了让客户端尽快响应用户的操作
+const events: EventHandlers<RPSGameState, Event, IEventPayloads> = {
+  [Event.PLAY]: (
+    { getState, setState },
+    {
+      emitter, players,
+      index,
+    },
+  ) => {
+    const { context, context: { choices } } = getState();
+    setState({
+      context: {
+        ...context,
+        choices: {
+          ...choices,
+          [emitter!.userId]: index,
+        },
+      },
+    });
+  },
+};
 
 @Component({
   components: {
@@ -42,10 +70,10 @@ import { jsonfyPlayers } from "../../client/utils";
   }
 })
 export default class Game extends Vue {
-  private game = createReduxGameClient({
+  private game = createGameClient({
     client: play,
+    initialState,
     events,
-    reducer,
   });
 
   logs: string[] = [];
@@ -57,7 +85,7 @@ export default class Game extends Vue {
     const player = this.players.find(player => !player.isLocal && !player.isMaster);
     if (!player) return;
     return {
-      choice: this.state.choices[player.userId],
+      choice: this.state.context.choices[player.userId],
       userId: player.userId,
     };
   }
@@ -66,7 +94,7 @@ export default class Game extends Vue {
     const player = this.players.find(player => player.isLocal);
     if (!player) return;
     return {
-      choice: this.state.choices[player.userId],
+      choice: this.state.context.choices[player.userId],
       userId: player.userId,
     };
   }
