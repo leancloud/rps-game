@@ -13,6 +13,7 @@ import basicAuth = require("express-basic-auth");
 import _ = require("lodash");
 import os = require("os");
 import PRSGameRedux from "../games/rps-game-redux/server";
+import PRSGameVanilla from "../games/rps-game-vanilla/server";
 import PRSGameXstate from "../games/rps-game-xstate/server";
 import { GameMode } from "../games/types";
 import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
@@ -54,6 +55,7 @@ const createReception = <T extends Game>(game: GameConstructor<T>) => {
 };
 
 const games = {
+  [GameMode.Vanilla]: createReception(PRSGameVanilla),
   [GameMode.Redux]: createReception(PRSGameRedux),
   [GameMode.Xstate]: createReception(PRSGameXstate),
 };

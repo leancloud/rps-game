@@ -5,6 +5,7 @@
     <Lobby v-if="status == 'LOBBY'" v-bind:mode.sync="mode"></Lobby>
     <template v-if="status == 'GAME'">
       <div class="mode">Mode: {{mode}}</div>
+      <GameVanilla v-if="mode == modes.Vanilla"></GameVanilla>
       <GameRedux v-if="mode == modes.Redux"></GameRedux>
       <GameXstate v-if="mode == modes.Xstate"></GameXstate>
     </template>
@@ -17,6 +18,7 @@ import { play, Event } from "@leancloud/play";
 import Login from "./components/Login.vue";
 import Lobby from "./components/Lobby.vue";
 import { GameMode } from "../games/types";
+import GameVanilla from "../games/rps-game-vanilla/Client.vue";
 import GameRedux from "../games/rps-game-redux/Client.vue";
 import GameXstate from "../games/rps-game-xstate/Client.vue";
 import { errorHandler } from "./utils";
@@ -25,6 +27,7 @@ import { errorHandler } from "./utils";
   components: {
     Login,
     Lobby,
+    GameVanilla,
     GameRedux,
     GameXstate,
   }
@@ -32,7 +35,7 @@ import { errorHandler } from "./utils";
 export default class App extends Vue {
   status = "LOGIN";
   modes = GameMode;
-  mode = GameMode.Redux;
+  mode = GameMode.Vanilla;
 
   mounted() {
     play.on(Event.CONNECTED, () => {

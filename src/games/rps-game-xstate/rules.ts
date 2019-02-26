@@ -1,6 +1,6 @@
 // tslint:disable:object-literal-sort-keys
 import { Env } from "@leancloud/stateful-game";
-import { Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
+import { Choice, Result, UNKNOWN_CHOICE, ValidChoice, wins } from "../models";
 
 import { Player } from "@leancloud/play";
 
@@ -98,8 +98,6 @@ const initGame = assign(
   },
 );
 
-// [✊, ✌️, ✋] wins [✌️, ✋, ✊]
-const wins = [1, 2, 0];
 interface IValidChoiceMaop {
   [playerId: string]: ValidChoice;
 }

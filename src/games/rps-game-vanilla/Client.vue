@@ -31,10 +31,10 @@ import {
   ReceiverGroup,
   CustomEventData
 } from "@leancloud/play";
-import { createReduxGameClient, ClientEvent } from "@leancloud/stateful-game/client";
 import Player from '../Player.vue';
-import { Event, events, reducer, RPSGameState } from "./rules";
+import { Event, events, initialState } from "./rules";
 import { ValidChoice } from "../models";
+import { createGameClient, ClientEvent } from "@leancloud/stateful-game/client";
 import { jsonfyPlayers } from "../../client/utils";
 
 @Component({
@@ -43,10 +43,10 @@ import { jsonfyPlayers } from "../../client/utils";
   }
 })
 export default class Game extends Vue {
-  private game = createReduxGameClient({
+  private game = createGameClient({
     client: play,
+    initialState,
     events,
-    reducer,
   });
 
   logs: string[] = [];
@@ -72,7 +72,7 @@ export default class Game extends Vue {
     };
   }
 
-  created() {
+  mounted() {
     play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
       this.players = jsonfyPlayers(this.game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
