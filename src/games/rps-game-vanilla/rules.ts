@@ -1,7 +1,7 @@
 import { Player } from "@leancloud/play";
 import { EventHandlers, fromServerOnly } from "@leancloud/stateful-game";
 import { mapValues } from "lodash";
-import { Choice, Result, UNKNOWN_CHOICE, ValidChoice, wins } from "../models";
+import { beats, Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
 
 export interface IRPSGameState {
   started: boolean;
@@ -74,7 +74,7 @@ export const events: EventHandlers<IRPSGameState, Event, IEventPayloads> = {
 const getWinner = (choices: IValidChoiceMap) => {
   const [[player1Id, player1Choice], [player2Id, player2Choice]] = Object.entries(choices);
   if (player1Choice === player2Choice) { return null; }
-  return wins[player1Choice] === player2Choice ? player1Id : player2Id;
+  return player1Choice === beats[player2Choice] ? player1Id : player2Id;
 };
 
 const getResult = (winnerId: string | null) => winnerId ? { winnerId } : { draw: true };

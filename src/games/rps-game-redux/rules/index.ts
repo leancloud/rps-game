@@ -2,7 +2,7 @@ import { Player } from "@leancloud/play";
 import { fromServerOnly, ReduxEventHandlers } from "@leancloud/stateful-game";
 import { ActionType, StateType } from "@leancloud/stateful-game/action";
 import { mapValues } from "lodash";
-import { UNKNOWN_CHOICE, ValidChoice, wins } from "../../models";
+import { beats, UNKNOWN_CHOICE, ValidChoice } from "../../models";
 import * as actions from "./actions";
 import reducer from "./reducer";
 
@@ -69,7 +69,7 @@ export const events: ReduxEventHandlers<RPSGameState, Event, IEventPayloads, RPS
 const getWinner = (choices: IValidChoiceMaop) => {
   const [[player1Id, player1Choice], [player2Id, player2Choice]] = Object.entries(choices);
   if (player1Choice === player2Choice) { return null; }
-  return wins[player1Choice] === player2Choice ? player1Id : player2Id;
+  return player1Choice === beats[player2Choice] ? player1Id : player2Id;
 };
 
 export const filter = (

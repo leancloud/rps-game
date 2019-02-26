@@ -1,6 +1,6 @@
 // tslint:disable:object-literal-sort-keys
 import { Env } from "@leancloud/stateful-game";
-import { Choice, Result, UNKNOWN_CHOICE, ValidChoice, wins } from "../models";
+import { beats, Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
 
 import { Player } from "@leancloud/play";
 
@@ -110,7 +110,7 @@ const getResult = (choices: IValidChoiceMaop) => {
     return { draw: true };
   }
   const winnerId =
-    wins[player1Choice] === player2Choice ? player1Id : player2Id;
+    player1Choice === beats[player2Choice] ? player1Id : player2Id;
   return { winnerId };
 };
 const judge = assign((ctx: IRPSGameContext) => ({
