@@ -5,7 +5,7 @@ import { beats, Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
 import { Player } from "@leancloud/play";
 
 import { GameEventType } from "@leancloud/stateful-game";
-import { assign, EventObject, Machine } from "@leancloud/stateful-game/xstate";
+import { assign, Machine } from "@leancloud/stateful-game/xstate";
 import { mapValues, pick } from "lodash";
 
 export enum Event {
@@ -55,20 +55,18 @@ interface IRPSGameContext {
 
 const fromServer = (
   ctx: IRPSGameContext,
-  // https://github.com/davidkpiano/xstate/issues/338
-  event: PRSGameEvent | EventObject,
+  event: PRSGameEvent,
 ) => event.emitterEnv === Env.SERVER;
 
 const from = (player: keyof IRPSGameContext["players"]) => (
   ctx: IRPSGameContext,
-  // https://github.com/davidkpiano/xstate/issues/338
-  event: PRSGameEvent | EventObject,
+  event: PRSGameEvent,
 ): boolean => !!event.emitter && event.emitter.userId === ctx.players[player];
 
 const updateChoice = assign(
   (
     ctx: IRPSGameContext,
-    event: Filter<PRSGameEvent, Event.PLAY> | EventObject,
+    event: Filter<PRSGameEvent, Event.PLAY>,
   ) => {
     return {
       choices: {
@@ -80,7 +78,7 @@ const updateChoice = assign(
 );
 
 const initGame = assign(
-  (_, event: Filter<PRSGameEvent, Event.START> | EventObject) => {
+  (_, event: Filter<PRSGameEvent, Event.START>) => {
     const players = {
       player0: event.players[0].userId,
       player1: event.players[1].userId,
