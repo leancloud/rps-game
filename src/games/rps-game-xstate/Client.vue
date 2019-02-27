@@ -1,28 +1,27 @@
 <template>
   <div>
-    <div v-if="opponent">
-      对手<Player :player="opponent" :result="state.context.result"></Player>
-    </div>
-    你<Player :player="localPlayer" :result="state.context.result"></Player>
-    <div v-if="state.value === 'waiting'">正在等待其他玩家</div>
-    <div v-else-if="state.value.started">
-      <div v-show="localPlayer.choice === null">
-        请选择：
-        <button v-on:click="choose(i)" v-for="(option, i) in options" v-bind:key="i">{{option}}</button>
+    <div class="level desk">
+      <div class="level-left" v-if="ready">
+        <div class="level-item">
+          <span class="tag ">对手</span>
+          <Player v-if="opponent" :player="opponent" :result="state.context.result"></Player>
+        </div>
+      </div>
+      <div class="level-item desk-info">
+        <div v-if="!ready">正在等待其他玩家</div>
+        <Actions v-else :result="state.context.result" :local-player="localPlayer" :choose="choose" :leave="leave"></Actions>
+      </div>
+      <div class="level-right" v-if="ready">
+        <div class="level-item">
+          <Player :player="localPlayer" :result="state.context.result"></Player>
+          <span class="tag ">你</span>
+        </div>
       </div>
     </div>
-    <!-- state.value === 'end' -->
-    <div v-else>
-      <div v-if="state.context.result && state.context.result.draw">平局</div>
-      <button v-on:click="leave()">离开房间</button>
-    </div>
     <hr>
-    <div>当前状态：{{state}}</div>
+    <State :state="state"></State>
     <hr>
-    <details open>
-      <summary>日志</summary>
-      <div v-for="log in logs" v-bind:key="log">{{log}}</div>
-    </details>
+    <Logs :logs="logs"></Logs>
   </div>
 </template>
 
@@ -37,9 +36,13 @@ import {
 import { RPSGameState, PRSGameEvent, initialState, Event, IEventPayloads } from './rules';
 import { EventHandlers } from "@leancloud/stateful-game";
 import { createGameClient, ClientEvent } from "@leancloud/stateful-game/client";
-import Player from '../Player.vue';
+import Player from '../components/Player.vue';
+import Actions from '../components/Actions.vue';
+import State from '../components/State.vue';
+import Logs from '../components/Logs.vue';
 import { jsonfyPlayers } from "../../client/utils";
 import { ValidChoice } from "../models";
+import { ILog } from "../components/types";
 
 // 客户端事件处理逻辑
 // 这是为了让客户端尽快响应用户的操作
@@ -67,6 +70,9 @@ const events: EventHandlers<RPSGameState, Event, IEventPayloads> = {
 @Component({
   components: {
     Player,
+    Actions,
+    State,
+    Logs,
   }
 })
 export default class Game extends Vue {
@@ -76,8 +82,7 @@ export default class Game extends Vue {
     events,
   });
 
-  logs: string[] = [];
-  options = ["✊", "✌️", "✋"];
+  logs: ILog[] = [];
   state = this.game.state;
   players = jsonfyPlayers(this.game.players);
 
@@ -97,6 +102,10 @@ export default class Game extends Vue {
       choice: this.state.context.choices[player.userId],
       userId: player.userId,
     };
+  }
+
+  get ready() {
+    return this.state.value !== 'waiting';
   }
 
   created() {
@@ -121,9 +130,12 @@ export default class Game extends Vue {
     play.leaveRoom();
   }
 
-  private log(log: string, scope = "Game") {
-    const now = new Date();
-    this.logs.push(`[${scope}] [${now.toLocaleTimeString()} ${now.getMilliseconds()}] ${log}`);
+  private log(content: string, scope = "Game") {
+    this.logs.push({
+      content,
+      timestamp: Date.now(),
+      tags: [scope],
+    });
   }
 }
 </script>

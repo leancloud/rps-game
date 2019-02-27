@@ -32,14 +32,16 @@ const loadBalancerFactory = new LoadBalancerFactory({
 
 type GameConstructor<T extends Game> = GameManager<T>["gameClass"];
 
-const createReception = <T extends Game>(game: GameConstructor<T>) => {
+const createReception = <T extends Game>(game: GameConstructor<T>, name: string) => {
   const reception = new Reception(game, APP_ID, APP_KEY, {
     concurrency: 2,
     region: Region.EastChina,
   });
 
   const loadBalancer = loadBalancerFactory
-    .bind(reception, ["makeReservation", "createGameAndGetName"])
+    .bind(reception, ["makeReservation", "createGameAndGetName"], {
+      poolId: name,
+    })
     .on("online", () => console.log("Load balancer online"))
     .on("offline", () => {
       console.warn(
@@ -55,9 +57,9 @@ const createReception = <T extends Game>(game: GameConstructor<T>) => {
 };
 
 const games = {
-  [GameMode.Vanilla]: createReception(PRSGameVanilla),
-  [GameMode.Redux]: createReception(PRSGameRedux),
-  [GameMode.Xstate]: createReception(PRSGameXstate),
+  [GameMode.Vanilla]: createReception(PRSGameVanilla, GameMode.Vanilla),
+  [GameMode.Redux]: createReception(PRSGameRedux, GameMode.Redux),
+  [GameMode.Xstate]: createReception(PRSGameXstate, GameMode.Xstate),
 };
 
 const debug = d("ClientEngine");
