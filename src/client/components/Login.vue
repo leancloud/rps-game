@@ -36,7 +36,7 @@
       <div class="field">
         <label class="label is-small">Client Engine Server
           <div class="control">
-            <input class="input is-small" v-model="configs.clientEngineServer" required/>
+            <input class="input is-small" v-model="configs.clientEngineServer"/>
           </div>
         </label>
       </div>
