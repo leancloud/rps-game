@@ -1,6 +1,6 @@
 import { Player } from "@leancloud/play";
 import { EventHandlers, fromServerOnly } from "@leancloud/stateful-game";
-import { mapValues } from "lodash";
+import mapValues = require("lodash/mapValues");
 import { beats, Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
 
 export interface IRPSGameState {

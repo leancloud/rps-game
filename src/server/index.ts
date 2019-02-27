@@ -10,7 +10,7 @@ import cors = require("cors");
 import d = require("debug");
 import express = require("express");
 import basicAuth = require("express-basic-auth");
-import _ = require("lodash");
+import map = require("lodash/map");
 import os = require("os");
 import PRSGameRedux from "../games/rps-game-redux/server";
 import PRSGameVanilla from "../games/rps-game-vanilla/server";
@@ -118,7 +118,7 @@ apiRouter.use(
 apiRouter.get("/admin/status", async (req, res, next) => {
   try {
     res.json({
-      games: await Promise.all(_.map(games, async (game) => ({
+      games: await Promise.all(map(games, async (game) => ({
         loadBalancer: await game.loadBalancer.getStatus(),
         reception: await game.reception.getStatus(),
       }))),
@@ -134,7 +134,7 @@ apiRouter.get("/admin/status", async (req, res, next) => {
 process.on("SIGTERM", async () => {
   debug("SIGTERM recieved. Closing the LB.");
   try {
-    await Promise.all(_.map(games, (game) => game.loadBalancer.close()));
+    await Promise.all(map(games, (game) => game.loadBalancer.close()));
     debug("Shutting down.");
     setTimeout(() => {
       process.exit(0);

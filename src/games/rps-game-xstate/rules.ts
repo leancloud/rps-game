@@ -6,7 +6,8 @@ import { Player } from "@leancloud/play";
 
 import { GameEventType } from "@leancloud/stateful-game";
 import { assign, Machine } from "@leancloud/stateful-game/xstate";
-import { mapValues, pick } from "lodash";
+import mapValues = require("lodash/mapValues");
+import pick = require("lodash/pick");
 
 export enum Event {
   PLAY = "PLAY",

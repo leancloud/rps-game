@@ -1,7 +1,7 @@
 import { Player } from "@leancloud/play";
 import { fromServerOnly, ReduxEventHandlers } from "@leancloud/stateful-game";
 import { ActionType, StateType } from "@leancloud/stateful-game/action";
-import { mapValues } from "lodash";
+import mapValues = require("lodash/mapValues");
 import { beats, UNKNOWN_CHOICE, ValidChoice } from "../../models";
 import * as actions from "./actions";
 import reducer from "./reducer";

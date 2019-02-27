@@ -43,7 +43,7 @@
     "@types/cors": "^2.8.4",
     "@types/debug": "0.0.31",
     "@types/express": "^4.16.0",
-    "@types/lodash": "^4.14.117",
+    "@types/lodash": "^4.14.121",
     "@vue/component-compiler-utils": "^2.3.1",
     "axios": "^0.18.0",
     "parcel-bundler": "^1.10.3",
