@@ -78,8 +78,8 @@ const updateChoice = assign(
   },
 );
 
-const initGame = assign(
-  (_, event: Filter<PRSGameEvent, Event.START>) => {
+const initGame = assign<IRPSGameContext, Filter<PRSGameEvent, Event.START>>(
+  (_, event) => {
     const players = {
       player0: event.players[0].userId,
       player1: event.players[1].userId,

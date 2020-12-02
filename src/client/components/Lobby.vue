@@ -24,13 +24,14 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { play, Event } from "@leancloud/play";
 import { configs } from "../configs";
-import { listen } from "../utils";
 import { GameMode } from "../../games/types";
 
 @Component
 export default class Lobby extends Vue {
+  @Prop() userId!: string;
+  @Prop() onJoinRoom!: (roomName: string) => void;
+
   @Prop() private mode!: GameMode;
 
   id = Date.now().toString();
@@ -44,11 +45,11 @@ export default class Lobby extends Vue {
       },
       body: JSON.stringify({
         mode: this.mode,
-        playerId: play.userId
+        playerId: this.userId,
       })
     })
       .then(data => data.json())
-      .then(({ roomName }) => this.joinRoom(roomName));
+      .then(({ roomName }) => this.onJoinRoom(roomName))
   }
 
   create() {
@@ -59,16 +60,11 @@ export default class Lobby extends Vue {
       },
       body: JSON.stringify({
         mode: this.mode,
-        playerId: play.userId
+        playerId: this.userId,
       })
     })
       .then(data => data.json())
-      .then(({ roomName }) => this.joinRoom(roomName));
-  }
-
-  joinRoom(roomName: string) {
-    play.joinRoom(roomName);
-    return listen(play, Event.ROOM_JOINED, Event.ROOM_JOIN_FAILED);
+      .then(({ roomName }) => this.onJoinRoom(roomName));
   }
 }
 </script>

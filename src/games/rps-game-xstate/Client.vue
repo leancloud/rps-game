@@ -28,18 +28,18 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import {
-  play,
+  Client,
+  CustomEventData,
   Event as PlayEvent,
   ReceiverGroup,
-  CustomEventData
 } from "@leancloud/play";
-import { RPSGameState, PRSGameEvent, initialState, Event, IEventPayloads } from './rules';
+import { RPSGameState, PRSGameEvent, initialState, Event, IEventPayloads } from "./rules";
 import { EventHandlers } from "@leancloud/stateful-game";
 import { createGameClient, ClientEvent } from "@leancloud/stateful-game/client";
-import Player from '../components/Player.vue';
-import Actions from '../components/Actions.vue';
-import State from '../components/State.vue';
-import Logs from '../components/Logs.vue';
+import Player from "../components/Player.vue";
+import Actions from "../components/Actions.vue";
+import State from "../components/State.vue";
+import Logs from "../components/Logs.vue";
 import { jsonfyPlayers } from "../../client/utils";
 import { ValidChoice } from "../models";
 import { ILog } from "../components/types";
@@ -76,8 +76,11 @@ const events: EventHandlers<RPSGameState, Event, IEventPayloads> = {
   }
 })
 export default class Game extends Vue {
+  @Prop() client!: Client;
+  @Prop() onLeftRoom!: () => void;
+
   private game = createGameClient({
-    client: play,
+    client: this.client,
     initialState,
     events,
   });
@@ -105,15 +108,15 @@ export default class Game extends Vue {
   }
 
   get ready() {
-    return this.state.value !== 'waiting';
+    return this.state.value !== "waiting";
   }
 
   created() {
-    play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
+    this.client.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
       this.players = jsonfyPlayers(this.game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
     });
-    play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
+    this.client.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
     this.game.on(ClientEvent.STATE_UPDATE, (state) => {
@@ -127,7 +130,7 @@ export default class Game extends Vue {
   }
 
   private leave() {
-    play.leaveRoom();
+    this.onLeftRoom();
   }
 
   private log(content: string, scope = "Game") {

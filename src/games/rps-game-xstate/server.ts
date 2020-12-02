@@ -1,5 +1,5 @@
 import { autoDestroy, AutomaticGameEvent, listen, watchRoomFull } from "@leancloud/client-engine";
-import { Event as PlayEvent, Play, Room } from "@leancloud/play";
+import { Client, Event as PlayEvent, Room } from "@leancloud/play";
 import { defineXStateGame } from "@leancloud/stateful-game/server";
 import d = require("debug");
 import { Event as RPSEvent, filter, machine } from "./rules";
@@ -15,7 +15,7 @@ export default class RPSGame extends defineXStateGame({
 
   constructor(
     room: Room,
-    masterClient: Play,
+    masterClient: Client,
   ) {
     super(room, masterClient);
 
@@ -26,13 +26,13 @@ export default class RPSGame extends defineXStateGame({
   public terminate() {
     // 将游戏 Room 的 open 属性标记为 false，不再允许用户加入了。
     // 客户端可以按照业务需求响应该属性的变化（例如对于还未开始的游戏，客户端可以重新发起加入新游戏请求）。
-    this.masterClient.setRoomOpened(false);
+    this.masterClient.setRoomOpen(false);
     return super.terminate();
   }
 
   protected start = async () => {
     // 标记房间不再可加入
-    this.masterClient.setRoomOpened(false);
+    this.masterClient.setRoomOpen(false);
     // 向客户端广播游戏开始事件
     this.emitEvent(RPSEvent.START);
     // 监听 player 离开游戏事件

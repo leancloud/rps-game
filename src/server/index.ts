@@ -4,7 +4,6 @@ import {
   ICreateGameOptions,
   LoadBalancerFactory,
 } from "@leancloud/client-engine";
-import { Region } from "@leancloud/play";
 import bodyParser = require("body-parser");
 import cors = require("cors");
 import d = require("debug");
@@ -16,7 +15,7 @@ import PRSGameRedux from "../games/rps-game-redux/server";
 import PRSGameVanilla from "../games/rps-game-vanilla/server";
 import PRSGameXstate from "../games/rps-game-xstate/server";
 import { GameMode } from "../games/types";
-import { APP_ID, APP_KEY, MASTER_KEY } from "./configs";
+import { APP_ID, APP_KEY, API_SERVER, MASTER_KEY } from "./configs";
 import Reception from "./reception";
 
 const apiRouter = express.Router();
@@ -30,12 +29,15 @@ const loadBalancerFactory = new LoadBalancerFactory({
   redisUrl: process.env.REDIS_URL__CLIENT_ENGINE,
 });
 
-type GameConstructor<T extends Game> = GameManager<T>["gameClass"];
+type GameConstructor<T extends Game> = GameManager<T>["gameConstructor"];
 
 const createReception = <T extends Game>(game: GameConstructor<T>, name: string) => {
-  const reception = new Reception(game, APP_ID, APP_KEY, {
+  const reception = new Reception({
+    gameConstructor: game,
+    appId: APP_ID,
+    appKey: APP_KEY,
+    playServer: API_SERVER,
     concurrency: 2,
-    region: Region.EastChina,
   });
 
   const loadBalancer = loadBalancerFactory

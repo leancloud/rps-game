@@ -3,7 +3,7 @@
     <div class="level desk">
       <div class="level-left" v-if="state.started">
         <div class="level-item">
-          <span class="tag ">对手</span>
+          <span class="tag">对手</span>
           <Player v-if="opponent" :player="opponent" :result="state.result"></Player>
         </div>
       </div>
@@ -28,18 +28,18 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import {
-  play,
+  Client,
+  CustomEventData,
   Event as PlayEvent,
   ReceiverGroup,
-  CustomEventData
 } from "@leancloud/play";
 import { createReduxGameClient, ClientEvent } from "@leancloud/stateful-game/client";
-import Player from '../components/Player.vue';
-import Actions from '../components/Actions.vue';
-import State from '../components/State.vue';
-import Logs from '../components/Logs.vue';
+import Player from "../components/Player.vue";
+import Actions from "../components/Actions.vue";
+import State from "../components/State.vue";
+import Logs from "../components/Logs.vue";
 import { Event, events, reducer, RPSGameState } from "./rules";
-import { ValidChoice, options } from "../models";
+import { ValidChoice } from "../models";
 import { jsonfyPlayers } from "../../client/utils";
 import { ILog } from "../components/types";
 
@@ -52,14 +52,16 @@ import { ILog } from "../components/types";
   }
 })
 export default class Game extends Vue {
+  @Prop() client!: Client;
+  @Prop() onLeftRoom!: () => void;
+
   private game = createReduxGameClient({
-    client: play,
+    client: this.client,
     events,
     reducer,
   });
 
-  logs: string[] = [];
-  options = options;
+  logs: ILog[] = [];
   state = this.game.state;
   players = jsonfyPlayers(this.game.players);
 
@@ -82,11 +84,11 @@ export default class Game extends Vue {
   }
 
   created() {
-    play.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
+    this.client.on(PlayEvent.PLAYER_ROOM_JOINED, ({ newPlayer }) => {
       this.players = jsonfyPlayers(this.game.players);
       this.log(`${newPlayer.userId} 加入了房间`, "Play");
     });
-    play.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
+    this.client.on(PlayEvent.PLAYER_ROOM_LEFT, ({ leftPlayer }) => {
       this.log(`${leftPlayer.userId} 离开了房间`, "Play");
     });
     this.game.on(ClientEvent.STATE_UPDATE, (state) => {
@@ -100,7 +102,7 @@ export default class Game extends Vue {
   }
 
   private leave() {
-    play.leaveRoom();
+    this.onLeftRoom();
   }
 
   private log(content: string, scope = "Game") {
