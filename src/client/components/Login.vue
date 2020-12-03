@@ -34,6 +34,13 @@
         </label>
       </div>
       <div class="field">
+        <label class="label is-small">API_SERVER
+          <div class="control">
+            <input class="input is-small" v-model="configs.apiServer" required/>
+          </div>
+        </label>
+      </div>
+      <div class="field">
         <label class="label is-small">Client Engine Server
           <div class="control">
             <input class="input is-small" v-model="configs.clientEngineServer"/>
