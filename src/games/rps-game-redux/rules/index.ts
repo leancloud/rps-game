@@ -20,7 +20,7 @@ declare interface IEventPayloads {
 export {
   reducer,
   actions,
- };
+};
 export type RPSGameState = StateType<typeof reducer>;
 export type RPSGameAction = ActionType<typeof actions>;
 

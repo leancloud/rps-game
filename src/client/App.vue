@@ -17,12 +17,29 @@
 
     <section class="section">
       <div class="container">
-        <Login v-if="status == 'LOGIN'"></Login>
-        <Lobby v-if="status == 'LOBBY'" v-bind:mode.sync="mode"></Lobby>
+        <Login v-if="status == 'LOGIN'" :on-login="onLogin"></Login>
+        <Lobby
+          v-if="status == 'LOBBY'"
+          :mode.sync="mode"
+          :user-id="client.userId"
+          :on-join-room="onJoinRoom"
+        ></Lobby>
         <template v-if="status == 'GAME'">
-          <GameVanilla v-if="mode == modes.Vanilla"></GameVanilla>
-          <GameRedux v-if="mode == modes.Redux"></GameRedux>
-          <GameXstate v-if="mode == modes.Xstate"></GameXstate>
+          <GameVanilla
+            v-if="mode == modes.Vanilla"
+            :client="client"
+            :on-left-room="onLeftRoom"
+          ></GameVanilla>
+          <GameRedux
+            v-if="mode == modes.Redux"
+            :client="client"
+            :on-left-room="onLeftRoom"
+          ></GameRedux>
+          <GameXstate
+            v-if="mode == modes.Xstate"
+            :client="client"
+            :on-left-room="onLeftRoom"
+          ></GameXstate>
         </template>
       </div>
     </section>
@@ -32,8 +49,8 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import { play, Event } from "@leancloud/play";
+import { Component, Prop, Vue } from "vue-property-decorator";
+import { Client, Event } from "@leancloud/play";
 import Login from "./components/Login.vue";
 import Lobby from "./components/Lobby.vue";
 import { GameMode } from "../games/types";
@@ -56,23 +73,30 @@ export default class App extends Vue {
   status = "LOGIN";
   modes = GameMode;
   mode = GameMode.Vanilla;
-
   logo = options[Math.floor(Math.random() * 3)];
+  client: Client | null = null;
 
   mounted() {
-    play.on(Event.CONNECTED, () => {
-      this.status = "LOBBY";
-    });
-    play.on(Event.CONNECT_FAILED, errorHandler);
-    play.on(Event.ROOM_JOINED, () => {
-      this.status = "GAME";
-    });
-    play.on(Event.ROOM_JOIN_FAILED, errorHandler);
-    play.on(Event.ROOM_LEFT, () => {
-      this.status = "LOBBY";
-    });
+    document.title = this.logo + " RPSGame";
+  }
 
-    document.title = this.logo + ' RPSGame';
+  private onLogin(client: Client) {
+    this.client = client;
+    this.client.connect()
+      .then(() => (this.status = "LOBBY"))
+      .catch(errorHandler);
+  }
+
+  private onJoinRoom(roomName: string) {
+    this.client?.joinRoom(roomName)
+      .then(() => (this.status = "GAME"))
+      .catch(errorHandler);
+  }
+
+  private onLeftRoom() {
+    this.client?.leaveRoom()
+      .then(() => (this.status = "LOBBY"))
+      .catch(errorHandler);
   }
 }
 </script>

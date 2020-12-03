@@ -6,7 +6,7 @@ import { beats, Choice, Result, UNKNOWN_CHOICE, ValidChoice } from "../models";
 export interface IRPSGameState {
   started: boolean;
   choices: { [playerId: string]: Choice; };
-  result?: Result;
+  result: Result | null;
 }
 
 export enum Event {
@@ -22,7 +22,7 @@ declare interface IEventPayloads {
 
 export const initialState: IRPSGameState = {
   choices: {},
-  result: undefined,
+  result: null,
   started: false,
 };
 
@@ -60,7 +60,7 @@ export const events: EventHandlers<IRPSGameState, Event, IEventPayloads> = {
       [player.userId]: null,
     }), {}),
     started: true,
-   })),
+  })),
   [Event.PLAYER_LEFT]: fromServerOnly((
     { getState, setState },
     { players },

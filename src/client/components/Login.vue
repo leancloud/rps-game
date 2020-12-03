@@ -46,24 +46,24 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { play, Event } from "@leancloud/play";
-import { listen } from "../utils";
-import { configs, REGION } from "../configs";
+import { Client } from "@leancloud/play";
+import { configs } from "../configs";
 
 @Component
 export default class Login extends Vue {
+  @Prop() onLogin!: (client: Client) => void;
+
   id = Date.now().toString();
   configs = configs;
 
   login() {
-    play.init({
+    const client = new Client({
       appId: configs.appId,
       appKey: configs.appKey,
-      region: REGION
+      playServer: configs.apiServer,
+      userId: this.id,
     });
-
-    play.userId = this.id;
-    play.connect();
+    this.onLogin(client);
   }
 }
 </script>
