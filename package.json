@@ -22,7 +22,7 @@
   "dependencies": {
     "@leancloud/client-engine": "^1.0.2",
     "@leancloud/play": "^1.0.0",
-    "@leancloud/stateful-game": "^0.3.0",
+    "@leancloud/stateful-game": "^0.4.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "debug": "^4.3.1",
