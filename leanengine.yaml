@@ -1,1 +1,2 @@
 installDevDependencies: true
+exposeEnvironmentsOnBuild: true
