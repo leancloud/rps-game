@@ -127,6 +127,7 @@ export default class Game extends Vue {
 
   private choose(index: ValidChoice) {
     this.game.emitEvent(Event.PLAY, {index});
+    this.log(`emitEvent: ${Event.PLAY}, ${JSON.stringify({index})}`);
   }
 
   private leave() {
